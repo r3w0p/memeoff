@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>memeoff</title>
+
+    <!-- THIRD-PARTY -->
+    <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre-exp.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre-icons.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/purecss@1.0.0/build/pure-min.css"
+          integrity="sha384-nn4HPE8lTHyVtfCBi5yW9d20FjT8BJwUXyWZT9InLYax14RDjBj46LmSztkmNP9w" crossorigin="anonymous">
+    <!-- FONTS -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat&display=swap">
+    <!-- CUSTOM -->
+    <link rel="stylesheet" href="style.css">
+  </head>
+
+  <body>
+
+    <!-- LOGIN -->
+    <div class="login page" id="login-page">
+      <div class="form">
+        <h3 id="login-page-title">What's your nickname?</h3>
+
+        <!-- INPUT USERNAME -->
+        <input class="usernameInput" id="input-username" type="text" maxlength="14" />
+
+        <br><br>
+        <h3 id="login-page-error"></h3>
+      </div>
+    </div>
+
+    <!-- GAME -->
+    <div id="game-page">
+      <!-- NAV BAR -->
+      <header id="game-navbar" class="navbar shadow" style="background-color: white; padding: 0.5% 1% 0.5% 1%;">
+        <section class="navbar-section">
+          <a href="https://github.com/r3w0p/memeoff" target="_blank" style="max-width: 25px; max-height: 25px;">
+            <img src="img/github.png" style="max-width: 25px; max-height: 25px;">
+          </a>
+        </section>
+
+        <section class="navbar-center;" style="background-color: green; height: 100%;">
+            <img src="img/logo.jpg" style="max-width: 40px; max-height: 40px; vertical-align: middle;">
+        </section>
+
+        <section class="navbar-section" style="text-align: right">
+          <div class="pure-menu pure-menu-horizontal">
+            <ul class="pure-menu-list">
+              <li class="pure-menu-item pure-menu-has-children pure-menu-allow-hover">
+                <a href="#" class="pure-menu-link" id="player-list-link"></a>
+                <ul class="pure-menu-children" id="player-list" style="left: auto; right: 0;"></ul>
+              </li>
+            </ul>
+          </div>
+        </section>
+      </header>
+
+      <!-- INPUT GAME -->
+      <input id="input-game" class="shadow" placeholder="Type here..."/>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/main.js"></script>
+  </body>
+</html>
