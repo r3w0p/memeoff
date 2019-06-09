@@ -18,10 +18,27 @@ $(function() {
   let usernames = new Set();
   let socket = io();
 
+  let timer_seconds = 10;
 
 
 
   /* TOOLS */
+
+  setInterval(function() {
+    if (!username) return;
+
+    if (connected) {
+      if (timer_seconds > -1)
+        timer_seconds -= 1;
+
+      $('#nav-timer-loading').show();
+      $('#nav-timer').html(timer_seconds > -1 ? timer_seconds + "..." : "Waiting...");
+
+    } else {
+      $('#nav-timer-loading').hide();
+      $('#nav-timer').html("Disconnected.");
+    }
+  }, 1000);
 
   const log = (message) => {
     if (LOGGING)
@@ -52,7 +69,7 @@ $(function() {
   };
 
   // Sets the client's username
-  const removeLoginPage = () => {
+  const transitionGamePage = () => {
     if (username) {
       $loginPage.off('click');
       $gamePage.show();
@@ -121,7 +138,7 @@ $(function() {
 
     data.arr_usernames.forEach(item => usernames.add(item));
     refreshPlayerList();
-    removeLoginPage();
+    transitionGamePage();
   });
 
   socket.on('login_failure', (data) => {
@@ -147,6 +164,7 @@ $(function() {
 
   socket.on('disconnect', () => {
     log('Disconnected.');
+    connected = false;
   });
 
   socket.on('reconnect', () => {

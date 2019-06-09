@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <title>memeoff</title>
 
+    <link rel="shortcut icon" href="img/logo.jpg">
+
     <!-- THIRD-PARTY -->
     <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre.min.css">
     <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre-exp.min.css">
@@ -33,20 +35,25 @@
 
     <!-- GAME -->
     <div id="game-page">
+
+
       <!-- NAV BAR -->
       <header id="game-navbar" class="navbar shadow" style="background-color: white; padding: 0.5% 1% 0.5% 1%;">
         <section class="navbar-section">
-          <a href="https://github.com/r3w0p/memeoff" target="_blank" style="max-width: 25px; max-height: 25px;">
+          <a href="https://github.com/r3w0p/memeoff" target="_blank" style="max-width: 25px; max-height: 25px; margin-right: 15px;">
             <img src="img/github.png" style="max-width: 25px; max-height: 25px;">
           </a>
+
+          <button class="btn btn-link loading" id="nav-timer-loading" style="vertical-align: middle;"></button>
+          <button class="btn btn-link" id="nav-timer" style="vertical-align: middle;"></button>
         </section>
 
-        <section class="navbar-center;" style="background-color: green; height: 100%;">
-            <img src="img/logo.jpg" style="max-width: 40px; max-height: 40px; vertical-align: middle;">
+        <section class="navbar-center;" style="height: 100%;">
+          <img src="img/logo.jpg" style="max-width: 40px; max-height: 40px; vertical-align: middle;">
         </section>
 
-        <section class="navbar-section" style="text-align: right">
-          <div class="pure-menu pure-menu-horizontal">
+        <section class="navbar-section">
+          <div class="pure-menu pure-menu-horizontal" style="text-align: right">
             <ul class="pure-menu-list">
               <li class="pure-menu-item pure-menu-has-children pure-menu-allow-hover">
                 <a href="#" class="pure-menu-link" id="player-list-link"></a>
@@ -57,8 +64,140 @@
         </section>
       </header>
 
-      <!-- INPUT GAME -->
-      <input id="input-game" class="shadow" placeholder="Type here..."/>
+
+
+
+      <div id="game-area">
+
+        <div id="game-area-submit">
+
+          <div class="container">
+            <div class="columns">
+
+              <div class="column col-4 col-xl-3 col-lg-2 col-sm-0"></div>
+
+              <div class="column col-4 col-xl-6 col-lg-8 col-sm-12 memecard">
+                <div class="card shadow">
+                  <div class="card-header">
+                    <!--<div class="card-title h3">when it be like that</div>-->
+                    <!--
+                    <textarea id="input-game"
+                              style="font-size: 150%;"
+                              maxlength="140"
+                              placeholder="Type here, then press Enter."></textarea>
+                              -->
+                    <span style="display: table-cell; width: 100%; text-align: center;">
+                      <!-- $("input").prop('disabled', true); -->
+                      <input id="input-game"
+                             type="text"
+                             style="width: 100%; font-size: 150%; border: 0;"
+                             maxlength="140"
+                             placeholder="Type here, then press Enter."/>
+                    </span>
+                  </div>
+
+                  <div class="card-image">
+                    <img class="img-responsive" src="img/bruh.jpg" width="100%">
+                  </div>
+                </div>
+              </div> <!-- memecard -->
+
+              <div class="column col-4 col-xl-3 col-lg-2 col-sm-0"></div>
+
+            </div>
+          </div>
+
+        </div> <!-- game-area-submit -->
+
+
+
+
+        <div id="game-area-vote">
+
+          <div class="container">
+            <div class="columns">
+
+              <div class="column col-4 col-xl-6 col-md-12 memecard">
+                <div class="card shadow">
+                  <div class="card-header">
+                    <div class="card-title h3">when it be like that</div>
+                  </div>
+
+                  <div class="card-image">
+                    <img class="img-responsive" src="img/bruh.jpg" width="100%">
+                  </div>
+
+                  <div class="card-footer memereacts">
+                    <table>
+                      <tr>
+                        <td><button class="btn btn-link memereacts-btn">😍</button></td>
+                        <td><button class="btn btn-link memereacts-btn">😆</button></td>
+                        <td><button class="btn btn-link memereacts-btn">😮</button></td>
+                        <td><button class="btn btn-link memereacts-btn">😢</button></td>
+                        <td><button class="btn btn-link memereacts-btn">😠</button></td>
+                      </tr>
+                    </table>
+                  </div>
+                </div>
+              </div> <!-- memecard -->
+
+            </div>
+          </div>
+
+        </div> <!-- game-area-vote -->
+
+
+
+
+        <div id="game-area-winner">
+
+          <div class="container">
+            <div class="columns">
+
+              <div class="column col-2 col-xl-1 col-md-0"></div>
+
+              <div class="column col-4 col-xl-5 col-md-12 memecard">
+                <div class="card shadow">
+                  <div class="card-header">
+                    <div class="card-title h3">Jakubi</div>
+                    <div class="card-subtitle text-gray">Winner (5 of 7 votes)</div>
+                  </div>
+                  <br>
+                  <div class="card-footer memereacts">
+                    <table>
+                      <tr>
+                        <td><button class="btn btn-link memereacts-btn unclickable badge" data-badge="1">😍</button></td>
+                        <td><button class="btn btn-link memereacts-btn unclickable badge" data-badge="2">😆</button></td>
+                        <td><button class="btn btn-link memereacts-btn unclickable badge" data-badge="0">😮</button></td>
+                        <td><button class="btn btn-link memereacts-btn unclickable badge" data-badge="2">😢</button></td>
+                        <td><button class="btn btn-link memereacts-btn unclickable badge" data-badge="0">😠</button></td>
+                      </tr>
+                    </table>
+                  </div>
+                </div>
+              </div> <!-- memecard winner -->
+
+              <div class="column col-4 col-xl-5 col-md-12 memecard">
+                <div class="card shadow">
+                  <div class="card-header">
+                    <div class="card-title h3">when it be like that</div>
+                  </div>
+
+                  <div class="card-image">
+                    <img class="img-responsive" src="img/bruh.jpg" width="100%">
+                  </div>
+                </div>
+              </div>
+            </div> <!-- memecard -->
+
+            <div class="column col-2 col-xl-1 col-md-0"></div>
+
+          </div>
+
+        </div> <!-- game-area-winner -->
+
+      </div>
+
     </div>
 
     <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>

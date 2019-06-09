@@ -1,5 +1,5 @@
 
-/* Fix user-agent */
+/* Other */
 
 * {
   font-family: 'Montserrat', Helvetica, Arial, sans-serif;
@@ -13,6 +13,13 @@ html, body {
   height: 100%;
   margin: 0;
   padding: 0;
+}
+
+textarea {
+  width: 100%;
+  -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
+  -moz-box-sizing: border-box;    /* Firefox, other Gecko */
+  box-sizing: border-box;         /* Opera/IE 8+ */
 }
 
 .shadow {
@@ -79,20 +86,54 @@ html, body {
   background-color: #fefefe;
 }
 
-#input-game {
-  border: 5px solid #fff;
-  height: 10%;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  outline: none;
-  padding-left: 1%;
-  position: absolute;
+#game-area {
   width: 100%;
-  font-size: 200%;
-  color: #000;
+  margin-top: 2%;
+  padding-left: 5%;
+  padding-right: 5%;
 }
 
-#player-list-link, #player-list li {
+#game-area-submit {
+  display: none;
+  width: 100%;
+}
+
+#game-area-vote {
+  display: none;
+  width: 100%;
+}
+
+#game-area-winner {
+  display: none;
+  width: 100%;
+}
+
+.memecard {
+  margin-bottom: 20px;
+}
+
+.memecard .card-title{
   color: black;
+}
+
+.memereacts table {
+  width: 100%;
+  height: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  text-align: center;
+}
+
+.memereacts-btn {
+  font-size: 200%;
+  text-align: center;
+}
+
+.memereacts-btn:hover {
+  background-color: #eee;
+}
+
+.memereacts-btn.unclickable {
+  pointer-events: none;
+  cursor: default;
 }
