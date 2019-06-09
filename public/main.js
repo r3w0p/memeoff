@@ -3,6 +3,20 @@ $(function() {
   // Init constants
   const LOGGING = true;
 
+  const PLAYERS = "PLAYERS";
+  const START   = "START";
+  const SUBMIT  = "SUBMIT";
+  const VOTE    = "VOTE";
+  const WINNER  = "WINNER";
+
+  const STATES = {
+      PLAYERS: $('#game-area-players'),
+      START:   $('#game-area-start'),
+      SUBMIT:  $('#game-area-submit'),
+      VOTE:    $('#game-area-vote'),
+      WINNER:  $('#game-area-winner')
+  };
+
   // Init variables
   let $window = $(window);
   
@@ -18,7 +32,8 @@ $(function() {
   let usernames = new Set();
   let socket = io();
 
-  let timer_seconds = 10;
+  let current_state = "";
+  let timer_seconds = -1;
 
 
 
@@ -31,14 +46,19 @@ $(function() {
       if (timer_seconds > -1)
         timer_seconds -= 1;
 
-      $('#nav-timer-loading').show();
-      $('#nav-timer').html(timer_seconds > -1 ? timer_seconds + "..." : "Waiting...");
-
-    } else {
-      $('#nav-timer-loading').hide();
-      $('#nav-timer').html("Disconnected.");
-    }
+      setNotif(timer_seconds > -1 ? timer_seconds + "..." : "...", true);
+    } else
+      setNotif("Disconnected.", false);
   }, 1000);
+
+  const setNotif = (message, show_loading) => {
+    if (show_loading)
+      $('#nav-timer-loading').show();
+    else
+      $('#nav-timer-loading').hide();
+
+    $('#nav-timer').html(message);
+  };
 
   const log = (message) => {
     if (LOGGING)
@@ -69,7 +89,7 @@ $(function() {
   };
 
   // Sets the client's username
-  const transitionGamePage = () => {
+  const removeLoginPage = () => {
     if (username) {
       $loginPage.off('click');
       $gamePage.show();
@@ -105,8 +125,25 @@ $(function() {
     $("#player-list").html(li_str);
   };
 
+  const stateTransition = (name, time) => {
+    if (current_state === name) return;
 
-  
+    for(let key in STATES)
+      if (key !== name) {
+        let state = STATES[key];
+        state.off('click');
+        state.fadeOut();
+      }
+
+    STATES[name].on('click');
+    STATES[name].fadeIn();
+
+    timer_seconds = time;
+    current_state = name;
+  };
+
+
+
 
   /* KEYBOARD EVENTS */
 
@@ -131,24 +168,46 @@ $(function() {
 
   /* SOCKET EVENTS */
 
+  socket.on('transition', (data) => {
+    log('Transition: ' + data.current_state);
+
+    if (data.current_state in STATES) {
+
+      if(data.current_state === SUBMIT) {
+        log("Loading image...");
+
+        $('#submit-image-container').html(
+            $('<img>',{
+              class: 'img-responsive',
+              src: data.bundle.image,
+              width: '100%'
+            })
+        );
+      }
+
+      stateTransition(data.current_state, data.current_time);
+    }
+  });
+
   socket.on('login_success', (data) => {
     connected = true;
     username = data.username;
-    log('Login success (%s).', username);
+    log('Login success.');
 
-    data.arr_usernames.forEach(item => usernames.add(item));
+    data.all_usernames.forEach(item => usernames.add(item));
     refreshPlayerList();
-    transitionGamePage();
+    removeLoginPage();
+    stateTransition(data.current_state, data.current_time);
   });
 
   socket.on('login_failure', (data) => {
-    log('Login failed (%s).', data.username);
+    log('Login failed.');
     showLoginErrorMessage(data.message)
   });
 
   socket.on('user_joined', (data) => {
     if (data.username !== username) {
-      log('User joined (%s).', data.username);
+      log('User joined: ' + data.username);
       usernames.add(data.username);
       refreshPlayerList();
     }
@@ -156,7 +215,7 @@ $(function() {
 
   socket.on('user_left', (data) => {
     if (data.username !== username) {
-      log('User left (%s).', data.username);
+      log('User left: ' + data.username);
       usernames.delete(data.username);
       refreshPlayerList();
     }

@@ -87,25 +87,23 @@ textarea {
 }
 
 #game-area {
+  position: relative;
   width: 100%;
   margin-top: 2%;
   padding-left: 5%;
   padding-right: 5%;
 }
 
-#game-area-submit {
+#game-area > div {
   display: none;
+  position: absolute;
   width: 100%;
+  top: 2%;
+  left: 0;
 }
 
-#game-area-vote {
+#nav-timer-loading {
   display: none;
-  width: 100%;
-}
-
-#game-area-winner {
-  display: none;
-  width: 100%;
 }
 
 .memecard {

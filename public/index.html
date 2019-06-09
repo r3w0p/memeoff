@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>memeoff</title>
 
-    <link rel="shortcut icon" href="img/logo.jpg">
+    <link rel="shortcut icon" href="img/icon.png">
 
     <!-- THIRD-PARTY -->
     <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre.min.css">
@@ -49,7 +49,7 @@
         </section>
 
         <section class="navbar-center;" style="height: 100%;">
-          <img src="img/logo.jpg" style="max-width: 40px; max-height: 40px; vertical-align: middle;">
+          <img src="img/logo.png" style="max-height: 40px; vertical-align: middle;">
         </section>
 
         <section class="navbar-section">
@@ -69,7 +69,36 @@
 
       <div id="game-area">
 
-        <div id="game-area-submit">
+
+        <div id="game-area-players" style="z-index: 10;">
+
+          <div class="empty" style="background-color: transparent;">
+            <div class="empty-icon">
+              <i class="icon icon-2x icon-people"></i>
+            </div>
+            <p class="empty-title h5">Waiting for more players....</p>
+          </div>
+
+        </div>
+
+
+
+
+        <div id="game-area-start" style="z-index: 11;">
+
+          <div class="empty" style="background-color: transparent;">
+            <div class="empty-icon">
+              <i class="icon icon-2x icon-time"></i>
+            </div>
+            <p class="empty-title h5">Starting new game....</p>
+          </div>
+
+        </div>
+
+
+
+
+        <div id="game-area-submit" style="z-index: 12;">
 
           <div class="container">
             <div class="columns">
@@ -79,13 +108,6 @@
               <div class="column col-4 col-xl-6 col-lg-8 col-sm-12 memecard">
                 <div class="card shadow">
                   <div class="card-header">
-                    <!--<div class="card-title h3">when it be like that</div>-->
-                    <!--
-                    <textarea id="input-game"
-                              style="font-size: 150%;"
-                              maxlength="140"
-                              placeholder="Type here, then press Enter."></textarea>
-                              -->
                     <span style="display: table-cell; width: 100%; text-align: center;">
                       <!-- $("input").prop('disabled', true); -->
                       <input id="input-game"
@@ -96,8 +118,8 @@
                     </span>
                   </div>
 
-                  <div class="card-image">
-                    <img class="img-responsive" src="img/bruh.jpg" width="100%">
+                  <div class="card-image" id="submit-image-container">
+                    <!-- <img class="img-responsive" src="img/bruh.jpg" width="100%"> -->
                   </div>
                 </div>
               </div> <!-- memecard -->
@@ -112,7 +134,7 @@
 
 
 
-        <div id="game-area-vote">
+        <div id="game-area-vote" style="z-index: 13;">
 
           <div class="container">
             <div class="columns">
@@ -149,7 +171,7 @@
 
 
 
-        <div id="game-area-winner">
+        <div id="game-area-winner" style="z-index: 14;">
 
           <div class="container">
             <div class="columns">
