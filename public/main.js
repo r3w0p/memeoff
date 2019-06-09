@@ -35,6 +35,8 @@ $(function() {
   let current_state = "";
   let timer_seconds = -1;
 
+  let current_image = "";
+
 
 
   /* TOOLS */
@@ -106,8 +108,17 @@ $(function() {
   /* GAME */
 
   const resetGame = () => {
-    // TODO
-  }
+    // TODO reset all game variables
+
+    // submit
+    $('#input-game').prop('disabled', false);
+    $('#input-game').val("");
+    $('#input-game-submit').removeClass('disabled');
+    $('#input-game-skip').removeClass('disabled');
+    $('#submit-image-container').html("");
+    current_image = "";
+
+  };
 
   // Sends a chat message
   const sendUserSubmission = () => {
@@ -178,6 +189,15 @@ $(function() {
     sendUserSubmission();
   });
 
+  $("#input-game-skip").click(function(){
+    $('#input-game').prop('disabled', true);
+    $('#input-game').val("");
+    $('#input-game-submit').addClass('disabled');
+    $('#input-game-skip').addClass('disabled');
+
+    socket.emit('user_skip');
+  });
+
 
 
   /* SOCKET EVENTS */
@@ -194,10 +214,12 @@ $(function() {
       if(data.current_state === SUBMIT) {
         log("Loading image...");
 
+        current_image = data.bundle.image;
+
         $('#submit-image-container').html(
             $('<img>',{
               class: 'img-responsive',
-              src: data.bundle.image,
+              src: current_image,
               width: '100%'
             })
         );
@@ -211,6 +233,15 @@ $(function() {
     $('#input-game').prop('disabled', true);
     $('#input-game').val(data.text);
     $('#input-game-submit').addClass('disabled');
+    $('#input-game-skip').addClass('disabled');
+  });
+
+  socket.on('submission_count', (data) => {
+    $('#input-game-submit').attr('data-badge', data.submission_count);
+  });
+
+  socket.on('skip_count', (data) => {
+    $('#input-game-skip').attr('data-badge', data.skip_count);
   });
 
   socket.on('login_success', (data) => {

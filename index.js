@@ -30,7 +30,7 @@ const STATES = {
   PLAYERS: {"time": -1},
   START:   {"time": 3},
   SUBMIT:  {"time": 30},
-  VOTE:    {"time": 30},
+  VOTE:    {"time": 20},
   WINNER:  {"time": 10}
 };
 
@@ -43,12 +43,13 @@ const SUBREDDITS = [
 // Init variables
 
 let usernames = new Set();
-
 let current_state = "";
 let current_time = -1;
+
 let current_image = null;
 let attempting_download = false;
 let submissions = {};
+let skip_count = 0;
 
 
 setInterval(() => {
@@ -61,19 +62,19 @@ setInterval(() => {
 
   } else {
     if(current_state === PLAYERS) {
-      attemptStart();
+      resetGame();
 
     } else if(current_state === START) {
-      attemptSubmit();
+      handleStart();
 
     } else if(current_state === SUBMIT) {
-      attemptVote();
+      handleSubmit();
 
     } else if(current_state === VOTE) {
-      attemptWinner();
+      handleVote();
 
     } else if(current_state === WINNER) {
-      attemptStart();
+      resetGame();
     }
   }
 }, 1000);
@@ -97,19 +98,20 @@ const waitForMorePlayers = () => {
 };
 
 
-const attemptStart = () => {
-  if(current_time < 0) {
+const resetGame = (force) => {
+  if(force || current_time < 0) {
     // TODO reset all game variables
     current_image = null;
     attempting_download = false;
     submissions = {};
+    skip_count = 0;
 
     stateTransition(START);
   }
 };
 
 
-const attemptSubmit = () => {
+const handleStart = () => {
   // New image has been downloaded
   if (current_image) {
     // Wait for countdown, then start
@@ -122,20 +124,48 @@ const attemptSubmit = () => {
 };
 
 
-const attemptVote = () => {
-  if(current_time < 0)
-    stateTransition(VOTE);
+const handleSubmit = () => {
+  // If majority of users vote to skip, reset game
+  console.log(skip_count + " > " + (usernames.size / 2) + " = " + (skip_count > (usernames.size / 2)));
+
+  if (skip_count > (usernames.size / 2)) {
+    resetGame(true);
+
+  } else if(current_time < 0) {
+    if(!isEmpty(submissions))
+      stateTransition(VOTE);
+    else
+      resetGame();
+  }
 };
 
 
-const attemptWinner = () => {
+const handleVote = () => {
   if(current_time < 0)
-    stateTransition(WINNER);
+    if(!areNoVotes())
+      stateTransition(WINNER);
+    else
+      resetGame();
 };
 
 
 const getRandomItem = (items) => {
   return items[Math.floor(Math.random() * items.length)];
+};
+
+
+const isEmpty = (obj) => {
+  for(let key in obj)
+    if (obj.hasOwnProperty(key))
+      return false;
+
+  return true;
+};
+
+
+const areNoVotes = () => {
+  // TODO
+  return false;
 };
 
 
@@ -212,6 +242,21 @@ io.on('connection', (socket) => {
       socket.emit('submission_received', {
         username: socket.username,
         text: data.text
+      });
+
+      io.emit('submission_count', {
+        submission_count: Object.keys(submissions).length
+      });
+    }
+  });
+
+  socket.on('user_skip', () => {
+    if (addedUser) {
+      skip_count += 1;
+      console.log("skip_count: " + skip_count);
+
+      io.emit('skip_count', {
+        skip_count: skip_count
       });
     }
   });
