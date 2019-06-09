@@ -27,26 +27,28 @@ const VOTE    = "VOTE";
 const WINNER  = "WINNER";
 
 const STATES = {
-  PLAYERS: {"time": -1, "next": START},
-  START:   {"time": 5,  "next": SUBMIT},
-  SUBMIT:  {"time": 30, "next": VOTE},
-  VOTE:    {"time": 30, "next": WINNER},
-  WINNER:  {"time": 10, "next": START}
+  PLAYERS: {"time": -1},
+  START:   {"time": 3},
+  SUBMIT:  {"time": 30},
+  VOTE:    {"time": 30},
+  WINNER:  {"time": 10}
 };
 
 const SUBREDDITS = [
     "reactionpics",
-    "mfw",
-    "ReactionMemes"
+    "reactiongifs",
+    "mfw"
 ];
 
 // Init variables
 
 let usernames = new Set();
+
 let current_state = "";
 let current_time = -1;
 let current_image = null;
 let attempting_download = false;
+let submissions = {};
 
 
 setInterval(() => {
@@ -55,30 +57,23 @@ setInterval(() => {
 
   // Not enough players
   if (usernames.size < 2) {
-    if (current_state !== PLAYERS)
-      stateTransition(PLAYERS);
+    waitForMorePlayers();
 
   } else {
-    // When enough players arrive, notify new game starting
     if(current_state === PLAYERS) {
-      current_image = null;
-      stateTransition(START);
+      attemptStart();
 
     } else if(current_state === START) {
-      // New image has been downloaded
-      if (current_image) {
-        // Wait for countdown, then start
-        if(current_time < 0)
-          stateTransition(SUBMIT, {
-            image: current_image
-          });
+      attemptSubmit();
 
-      } else getNewImage(); // keep trying to get new image
+    } else if(current_state === SUBMIT) {
+      attemptVote();
 
-    } else {
-      if (current_time < 0) {
-        // TODO
-      }
+    } else if(current_state === VOTE) {
+      attemptWinner();
+
+    } else if(current_state === WINNER) {
+      attemptStart();
     }
   }
 }, 1000);
@@ -93,6 +88,49 @@ const stateTransition = (state_name, bundle) => {
     current_time: current_time,
     bundle: bundle || {}
   });
+};
+
+
+const waitForMorePlayers = () => {
+  if (current_state !== PLAYERS)
+    stateTransition(PLAYERS);
+};
+
+
+const attemptStart = () => {
+  if(current_time < 0) {
+    // TODO reset all game variables
+    current_image = null;
+    attempting_download = false;
+    submissions = {};
+
+    stateTransition(START);
+  }
+};
+
+
+const attemptSubmit = () => {
+  // New image has been downloaded
+  if (current_image) {
+    // Wait for countdown, then start
+    if(current_time < 0)
+      stateTransition(SUBMIT, {
+        image: current_image
+      });
+
+  } else getNewImage(); // keep trying to get new image
+};
+
+
+const attemptVote = () => {
+  if(current_time < 0)
+    stateTransition(VOTE);
+};
+
+
+const attemptWinner = () => {
+  if(current_time < 0)
+    stateTransition(WINNER);
 };
 
 
@@ -115,11 +153,6 @@ const getNewImage = () => {
       });
     });
   }
-  /*
-  fs.readFile(path.resolve(__dirname, './public/img/fried.png'), function(err, data) {
-    current_image = "data:image/png;base64,"+ data.toString("base64");
-  });
-  */
 };
 
 
@@ -162,6 +195,7 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     if (addedUser) {
       usernames.delete(socket.username);
+      delete submissions[socket.username];
 
       // echo globally that this client has left
       socket.broadcast.emit('user_left', {
@@ -169,4 +203,17 @@ io.on('connection', (socket) => {
       });
     }
   });
+
+  socket.on('user_submission', (data) => {
+    if (addedUser) {
+      submissions[data.username] = data.text;
+      console.log(submissions);
+
+      socket.emit('submission_received', {
+        username: socket.username,
+        text: data.text
+      });
+    }
+  });
+
 });

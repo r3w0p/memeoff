@@ -81,6 +81,8 @@ $(function() {
 
     if (username)
       socket.emit('login_request', username);
+    else
+      $("#login-page-error").html("Invalid username.");
   };
 
   // Show error message on login failure
@@ -103,12 +105,21 @@ $(function() {
 
   /* GAME */
 
+  const resetGame = () => {
+    // TODO
+  }
+
   // Sends a chat message
-  const sendGameText = () => {
+  const sendUserSubmission = () => {
+    if(!username) return;
+
     let text = cleanInput($inputGame.val().trim());
 
     if (text && connected) {
-      socket.emit('game text', text);
+      socket.emit('user_submission', {
+        username: username,
+        text: text
+      });
     }
   };
   
@@ -155,14 +166,17 @@ $(function() {
 
     // on ENTER key
     if (event.which === 13) {
-      if ($inputCurrent === $inputGame)
-        sendGameText();
-
-      else if ($inputCurrent === $inputUsername)
+      if ($inputCurrent === $inputUsername)
         sendLoginRequest();
     }
   });
 
+
+  /* CLICK EVENTS */
+
+  $("#input-game-submit").click(function(){
+    sendUserSubmission();
+  });
 
 
 
@@ -172,6 +186,10 @@ $(function() {
     log('Transition: ' + data.current_state);
 
     if (data.current_state in STATES) {
+
+      if(data.current_state === START) {
+        resetGame();
+      }
 
       if(data.current_state === SUBMIT) {
         log("Loading image...");
@@ -187,6 +205,12 @@ $(function() {
 
       stateTransition(data.current_state, data.current_time);
     }
+  });
+
+  socket.on('submission_received', (data) => {
+    $('#input-game').prop('disabled', true);
+    $('#input-game').val(data.text);
+    $('#input-game-submit').addClass('disabled');
   });
 
   socket.on('login_success', (data) => {

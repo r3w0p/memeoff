@@ -2,7 +2,7 @@
   "name": "memeoff",
   "version": "0.1.0",
   "author": "r3w0p",
-  "description": "A meme creating game.",
+  "description": "Meme battling with friends.",
   "main": "index.js",
   "keywords": [],
   "license": "MIT",

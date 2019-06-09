@@ -33,7 +33,7 @@ textarea {
   position: fixed;
   width: 100%;
   height: 100%;
-  z-index: 2;
+  z-index: 100;
   background-color: #000;
 }
 
@@ -57,7 +57,7 @@ textarea {
   width: 100%;
 }
 
-#login-page .form .usernameInput {
+#login-page .form #input-username {
   background-color: transparent;
   border: none;
   border-bottom: 2px solid #fff;
@@ -68,7 +68,7 @@ textarea {
 }
 
 
-#login-page .usernameInput {
+#login-page #input-username {
   font-size: 200%;
   letter-spacing: 3px;
   color: #fff;
@@ -100,6 +100,10 @@ textarea {
   width: 100%;
   top: 2%;
   left: 0;
+}
+
+#input-game {
+  border: 0;
 }
 
 #nav-timer-loading {

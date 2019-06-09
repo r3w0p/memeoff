@@ -1,6 +1,6 @@
 # memeoff
 
-A meme creating game.
+Meme battling with friends.
 
 ## How to use
 
@@ -8,5 +8,3 @@ A meme creating game.
 - Run on default port `3000` using `npm start`
 - Or, specify your own port using `PORT=<port> npm start`
 - Go to `http://localhost:<port>`
-
-

@@ -26,7 +26,7 @@
         <h3 id="login-page-title">What's your nickname?</h3>
 
         <!-- INPUT USERNAME -->
-        <input class="usernameInput" id="input-username" type="text" maxlength="14" />
+        <input id="input-username" type="text" maxlength="14" />
 
         <br><br>
         <h3 id="login-page-error"></h3>
@@ -70,7 +70,7 @@
       <div id="game-area">
 
 
-        <div id="game-area-players" style="z-index: 10;">
+        <div id="game-area-players" style="z-index: 2;">
 
           <div class="empty" style="background-color: transparent;">
             <div class="empty-icon">
@@ -84,7 +84,7 @@
 
 
 
-        <div id="game-area-start" style="z-index: 11;">
+        <div id="game-area-start" style="z-index: 3;">
 
           <div class="empty" style="background-color: transparent;">
             <div class="empty-icon">
@@ -98,7 +98,7 @@
 
 
 
-        <div id="game-area-submit" style="z-index: 12;">
+        <div id="game-area-submit" style="z-index: 4;">
 
           <div class="container">
             <div class="columns">
@@ -108,14 +108,28 @@
               <div class="column col-4 col-xl-6 col-lg-8 col-sm-12 memecard">
                 <div class="card shadow">
                   <div class="card-header">
-                    <span style="display: table-cell; width: 100%; text-align: center;">
-                      <!-- $("input").prop('disabled', true); -->
-                      <input id="input-game"
-                             type="text"
-                             style="width: 100%; font-size: 150%; border: 0;"
-                             maxlength="140"
-                             placeholder="Type here, then press Enter."/>
-                    </span>
+
+                    <div class="container">
+                      <div class="columns">
+
+                        <div class="column col-10">
+                          <textarea id="input-game"
+                                    style="font-size: 150%;"
+                                    maxlength="140"
+                                    placeholder="Type here (max 140 chars)."></textarea>
+                        </div>
+
+                        <div class="column col-2">
+                          <button class="btn btn-primary btn-action btn-lg memereacts-btn"
+                                  id="input-game-submit"
+                                  style="width: 100%; height: 100%">
+                            <i class="icon icon-check"></i>
+                          </button>
+                        </div>
+
+                      </div>
+                    </div> <!-- container -->
+
                   </div>
 
                   <div class="card-image" id="submit-image-container">
@@ -134,12 +148,18 @@
 
 
 
-        <div id="game-area-vote" style="z-index: 13;">
+
+
+
+        <div id="game-area-vote" style="z-index: 5;">
 
           <div class="container">
             <div class="columns">
 
-              <div class="column col-4 col-xl-6 col-md-12 memecard">
+
+
+
+              <div class="column col-4 col-xl-6 col-sm-12 memecard">
                 <div class="card shadow">
                   <div class="card-header">
                     <div class="card-title h3">when it be like that</div>
@@ -163,6 +183,64 @@
                 </div>
               </div> <!-- memecard -->
 
+
+
+
+              <div class="column col-4 col-xl-6 col-sm-12 memecard">
+                <div class="card shadow">
+                  <div class="card-header">
+                    <div class="card-title h3">when it be like that</div>
+                  </div>
+
+                  <div class="card-image">
+                    <img class="img-responsive" src="img/bruh.jpg" width="100%">
+                  </div>
+
+                  <div class="card-footer memereacts">
+                    <table>
+                      <tr>
+                        <td><button class="btn btn-link memereacts-btn">😍</button></td>
+                        <td><button class="btn btn-link memereacts-btn">😆</button></td>
+                        <td><button class="btn btn-link memereacts-btn">😮</button></td>
+                        <td><button class="btn btn-link memereacts-btn">😢</button></td>
+                        <td><button class="btn btn-link memereacts-btn">😠</button></td>
+                      </tr>
+                    </table>
+                  </div>
+                </div>
+              </div> <!-- memecard -->
+
+
+
+
+
+              <div class="column col-4 col-xl-6 col-sm-12 memecard">
+                <div class="card shadow">
+                  <div class="card-header">
+                    <div class="card-title h3">when it be like that</div>
+                  </div>
+
+                  <div class="card-image">
+                    <img class="img-responsive" src="img/bruh.jpg" width="100%">
+                  </div>
+
+                  <div class="card-footer memereacts">
+                    <table>
+                      <tr>
+                        <td><button class="btn btn-link memereacts-btn">😍</button></td>
+                        <td><button class="btn btn-link memereacts-btn">😆</button></td>
+                        <td><button class="btn btn-link memereacts-btn">😮</button></td>
+                        <td><button class="btn btn-link memereacts-btn">😢</button></td>
+                        <td><button class="btn btn-link memereacts-btn">😠</button></td>
+                      </tr>
+                    </table>
+                  </div>
+                </div>
+              </div> <!-- memecard -->
+
+
+
+
             </div>
           </div>
 
@@ -171,7 +249,7 @@
 
 
 
-        <div id="game-area-winner" style="z-index: 14;">
+        <div id="game-area-winner" style="z-index: 6;">
 
           <div class="container">
             <div class="columns">
