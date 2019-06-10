@@ -27,7 +27,148 @@ textarea {
 }
 
 
+/* Mobile First */
+
+/* Extra small devices (phones, 600px and down) */
+@media only screen and (max-width: 600px) {
+  .login-text {
+    font-size: 0.5em;
+  }
+
+  #game-navbar {
+    padding: 2% 1% 2% 1%;
+  }
+
+  .nav-text {
+    font-size: 1.8em;
+    color: red;
+  }
+
+  #game-navbar > .logo img {
+    height: 2.2em;
+  }
+
+  .hero .emoji {
+    font-size: 3em;
+  }
+
+  .hero .message {
+    font-size: 1em;
+  }
+
+  .submit-text {
+    font-size: 1.5em;
+  }
+}
+
+/* Small devices (portrait tablets and large phones, 600px and up) */
+@media only screen and (min-width: 600px) {
+  .login-text {
+    font-size: 1em;
+  }
+
+  #game-navbar {
+    padding: 2.5% 2% 2.5% 2%;
+  }
+
+  .nav-text {
+    font-size: 2.8em;
+    color: green;
+  }
+
+  #game-navbar > .logo img {
+    height: 4em;
+  }
+
+  .hero .emoji {
+    font-size: 3em;
+  }
+
+  .hero .message {
+    font-size: 1.5em;
+  }
+
+  .submit-text {
+    font-size: 2em;
+  }
+}
+
+/* Medium devices (landscape tablets, 768px and up) */
+@media only screen and (min-width: 768px) {
+  .login-text {
+    font-size: 1.8em;
+  }
+
+  #game-navbar {
+    padding: 2.5% 2% 2.5% 2%;
+  }
+
+  .nav-text {
+    font-size: 3.8em;
+    color: blue;
+  }
+
+  #game-navbar > .logo img {
+    height: 5em;
+  }
+
+  .hero .emoji {
+    font-size: 4em;
+  }
+
+  .hero .message {
+    font-size: 2em;
+  }
+
+  .submit-text {
+    font-size: 2.5em;
+  }
+}
+
+/* Large devices (laptops/desktops, 992px and up) */
+@media only screen and (min-width: 992px) {
+  .login-text {
+    font-size: 2em;
+  }
+
+  #game-navbar {
+    padding: 2.5% 2% 2.5% 2%;
+  }
+
+  .nav-text {
+    font-size: 4.8em;
+    color: purple;
+  }
+
+  #game-navbar > .logo img {
+    height: 6em;
+  }
+
+  .hero .emoji {
+    font-size: 4em;
+  }
+
+  .hero .message {
+    font-size: 2.5em;
+  }
+
+  .submit-text {
+    font-size: 3em;
+  }
+}
+
+
+
+
 /* Login Page */
+
+#login-page {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  z-index: 100;
+  background-color: #000;
+}
 
 #login-page {
   position: fixed;
@@ -105,14 +246,26 @@ textarea {
 
 #game-navbar {
   z-index: 10;
+  background-color: white;
+}
+
+#game-navbar > .logo {
+  display: table-cell;
+  vertical-align: middle;
+}
+
+#game-navbar > .logo img {
+  margin: 0 auto;
+  vertical-align: middle;
+  text-align: center;
+}
+
+.hero > div {
+  background-color: transparent;
 }
 
 #input-game {
   border: 0;
-}
-
-#nav-timer-loading {
-  display: none;
 }
 
 .memecard {

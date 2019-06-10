@@ -28,9 +28,9 @@ $(function() {
   let gameCurrentState = "";
 
   // Navbar
-  let $navbarIconLoading = $('#nav-timer-loading');
   let $navbarTimer = $('#nav-timer');
-  let $navbarPlayerListLink = $("#player-list-link");
+  let $navbarLogo = $('#nav-logo');
+  let $navbarPlayerListText = $("#player-list-text");
   let $navbarPlayerList = $("#player-list");
   let navbarTimerSeconds = -1;
 
@@ -39,21 +39,18 @@ $(function() {
   let $gameSubmitSend = $('#input-game-submit');
   let $gameSubmitSkip = $('#input-game-skip');
   let $gameSubmitImgContainer = $('#submit-image-container');
+  let gameCurrentImage = "";
 
   /* ALL */
   let $window = $(window);
   let $inputCurrent = $loginUsernameInput.focus();
 
-
+  let waitingForLoginResponse = false;
   let username;
   let connected = false;
   let usernames = new Set();
   let socket = io();
 
-
-
-
-  let current_image = "";
 
 
 
@@ -66,18 +63,22 @@ $(function() {
       if (navbarTimerSeconds > -1)
         navbarTimerSeconds -= 1;
 
-      setNotif(navbarTimerSeconds > -1 ? navbarTimerSeconds + "..." : "...", true);
+      $navbarTimer.html(navbarTimerSeconds > -1 ? navbarTimerSeconds + "..." : "...", true);
     } else
-      setNotif("Disconnected.", false);
+      $navbarTimer.html("😵", false);
   }, 1000);
 
-  const setNotif = (message, show_loading) => {
-    if (show_loading)
-      $navbarIconLoading.show();
-    else
-      $navbarIconLoading.hide();
+  // Refresh the names in the player list
+  const refreshPlayerList = () => {
+    let arr_usernames = Array.from(usernames).sort();
+    let li_str = "";
 
-    $navbarTimer.html(message);
+    arr_usernames.forEach(function (item, index) {
+      li_str += '<li class="menu-item nav-text">' + item + '</li>'
+    });
+
+    $navbarPlayerListText.html(arr_usernames.length > 10 ? "10+" : arr_usernames.length);
+    $navbarPlayerList.html(li_str);
   };
 
   const log = (message) => {
@@ -128,7 +129,6 @@ $(function() {
 
 
   const resetNavbar = () => {
-    $navbarIconLoading.hide();
     $navbarTimer.html("");
     navbarTimerSeconds = -1;
   };
@@ -149,7 +149,7 @@ $(function() {
 
     // Image
     $gameSubmitImgContainer.html("");
-    current_image = "";
+    gameCurrentImage = "";
   };
 
 
@@ -169,18 +169,20 @@ $(function() {
       });
     }
   };
-  
-  // Refresh the names in the player list
-  const refreshPlayerList = () => {
-    let arr_usernames = Array.from(usernames).sort();
-    let li_str = "";
 
-    arr_usernames.forEach(function (item, index) {
-      li_str += '<li class="pure-menu-item"><span class="pure-menu-link">' + item + '</span></li>';
-    });
+  const setGameImage = (image) => {
+    gameCurrentImage = image;
 
-    $navbarPlayerListLink.html("Players (" + arr_usernames.length + ")");
-    $navbarPlayerList.html(li_str);
+    if(gameCurrentImage)
+      $gameSubmitImgContainer.html(
+          $('<img>',{
+            class: 'img-responsive',
+            src: gameCurrentImage,
+            width: '100%'
+          })
+      );
+    else
+      $gameSubmitImgContainer.html("");
   };
 
   const stateTransition = (name, time) => {
@@ -213,8 +215,11 @@ $(function() {
 
     // on ENTER key
     if (event.which === 13) {
-      if ($inputCurrent === $loginUsernameInput)
+      if ($inputCurrent === $loginUsernameInput) {
+        waitingForLoginResponse = true;
+        $loginErrorMessage.html("Logging in...");
         sendLoginRequest();
+      }
     }
   });
 
@@ -226,10 +231,13 @@ $(function() {
   });
 
   $gameSubmitSkip.click(function() {
-    $('#input-game-skip').addClass('disabled');
+    $gameSubmitSkip.addClass('disabled');
     socket.emit('user_skip');
   });
 
+  $navbarLogo.click(function() {
+    window.open('https://github.com/r3w0p/memeoff', '_blank');
+  });
 
 
   /* SOCKET EVENTS */
@@ -247,15 +255,7 @@ $(function() {
 
   socket.on('new_image', (data) => {
     log("New image.");
-    current_image = data.image;
-
-    $gameSubmitImgContainer.html(
-        $('<img>',{
-          class: 'img-responsive',
-          src: current_image,
-          width: '100%'
-        })
-    );
+    setGameImage(data.image);
   });
 
   socket.on('submission_received', (data) => {
@@ -279,14 +279,18 @@ $(function() {
     log('Login success.');
 
     data.all_usernames.forEach(item => usernames.add(item));
+    setGameImage(data.current_image);
     refreshPlayerList();
+
     removeLoginPage();
     stateTransition(data.current_state, data.current_time);
+    waitingForLoginResponse = false;
   });
 
   socket.on('login_failure', (data) => {
     log('Login failed.');
-    $loginErrorMessage.html(data.message)
+    $loginErrorMessage.html(data.message);
+    waitingForLoginResponse = false;
   });
 
   socket.on('user_joined', (data) => {

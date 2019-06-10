@@ -1,24 +1,39 @@
-// Setup basic express server
-let fs = require('fs');
-let request = require('request').defaults({ encoding: null });
-let cheerio = require('cheerio');
-let randomPuppy = require('random-puppy');
+'use strict';
 
-let express = require('express');
-let app = express();
-let path = require('path');
-let server = require('http').createServer(app);
-let io = require('socket.io')(server);
-let port = process.env.PORT || 3000;
+const minimist = require('minimist');
+const request = require('request').defaults({ encoding: null });
+const randomPuppy = require('random-puppy');
 
-server.listen(port, () => {
-  console.log('Server listening at port %d', port);
+const express = require('express');
+const app = express();
+const path = require('path');
+const server = require('http').createServer(app);
+const io = require('socket.io')(server);
+
+
+let args = minimist(process.argv.slice(2), {
+  default: {
+    port: 3000,
+    submit: 60,
+    vote: 30,
+    winner: 15
+  },
+});
+
+
+/* SERVER SETUP */
+
+server.listen(args.port, () => {
+  console.log('Server listening at port %d', args.port);
 });
 
 app.use(express.static(path.join(__dirname, 'public')));
 
 
-// Init constants
+/* CONSTANTS */
+
+const MIN_PLAYERS = 3;
+const MIN_SUBMISSIONS = 2;
 
 const PLAYERS = "PLAYERS";
 const START   = "START";
@@ -28,25 +43,26 @@ const WINNER  = "WINNER";
 
 const STATES = {
   PLAYERS: {"time": -1},
-  START:   {"time": 3},
-  SUBMIT:  {"time": 30},
-  VOTE:    {"time": 20},
-  WINNER:  {"time": 10}
+  START:   {"time": 5},
+  SUBMIT:  {"time": args.submit},
+  VOTE:    {"time": args.vote},
+  WINNER:  {"time": args.winner}
 };
 
 const SUBREDDITS = [
     "reactionpics",
     "reactiongifs",
-    "mfw"
+    "shittyreactiongifs"
 ];
 
-// Init variables
+
+/* VARIABLES */
 
 let usernames = new Set();
 let current_state = "";
 let current_time = -1;
 
-let current_image = null;
+let current_image = "";
 let sent_new_image = false;
 let attempting_download = false;
 let submissions = {};
@@ -58,7 +74,7 @@ setInterval(() => {
     current_time -= 1;
 
   // Not enough players
-  if (usernames.size < 2) {
+  if (usernames.size < MIN_PLAYERS) {
     waitForMorePlayers();
 
   } else {
@@ -102,7 +118,7 @@ const waitForMorePlayers = () => {
 const resetGame = (force) => {
   if(force || current_time < 0) {
     // TODO reset all game variables
-    current_image = null;
+    current_image = "";
     sent_new_image = false;
     attempting_download = false;
     submissions = {};
@@ -135,19 +151,22 @@ const handleStart = () => {
 
 
 const handleSubmit = () => {
-  if (usernames.size === Object.keys(submissions).length) {
+  let num_submissions = Object.keys(submissions).length;
+  let num_users = usernames.size;
+
+  if (num_users === num_submissions) {
     // everybody has submitted
     stateTransition(VOTE);
 
-  } else if (skip_count > (usernames.size / 2)) {
+  } else if (skip_count > (num_users / 2)) {
     // majority want to skip current image
     resetGame(true);
 
   } else if(current_time < 0) {
-    if(!isEmpty(submissions))
-      stateTransition(VOTE);
-    else
+    if (num_submissions < MIN_SUBMISSIONS)
       resetGame();
+    else
+      stateTransition(VOTE);
   }
 };
 
@@ -225,7 +244,8 @@ io.on('connection', (socket) => {
       username: socket.username,
       all_usernames: Array.from(usernames),
       current_state: current_state,
-      current_time: current_time
+      current_time: current_time,
+      current_image: current_image
     });
 
     socket.broadcast.emit('user_joined', {
