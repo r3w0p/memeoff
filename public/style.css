@@ -87,6 +87,7 @@ textarea {
 }
 
 #game-area {
+  z-index: 2;
   position: relative;
   width: 100%;
   margin-top: 2%;
@@ -100,6 +101,10 @@ textarea {
   width: 100%;
   top: 2%;
   left: 0;
+}
+
+#game-navbar {
+  z-index: 10;
 }
 
 #input-game {

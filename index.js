@@ -47,6 +47,7 @@ let current_state = "";
 let current_time = -1;
 
 let current_image = null;
+let sent_new_image = false;
 let attempting_download = false;
 let submissions = {};
 let skip_count = 0;
@@ -102,6 +103,7 @@ const resetGame = (force) => {
   if(force || current_time < 0) {
     // TODO reset all game variables
     current_image = null;
+    sent_new_image = false;
     attempting_download = false;
     submissions = {};
     skip_count = 0;
@@ -112,23 +114,33 @@ const resetGame = (force) => {
 
 
 const handleStart = () => {
-  // New image has been downloaded
-  if (current_image) {
-    // Wait for countdown, then start
-    if(current_time < 0)
-      stateTransition(SUBMIT, {
-        image: current_image
-      });
 
-  } else getNewImage(); // keep trying to get new image
+  if (!current_image) {
+    // keep trying to get a new image
+    getNewImage();
+
+  } else if (!sent_new_image) {
+    // send new image
+    io.emit('new_image', {
+      image: current_image
+    });
+
+    sent_new_image = true;
+  }
+
+  // transition when new image sent and timer elapse
+  if(sent_new_image && current_time < 0)
+    stateTransition(SUBMIT);
 };
 
 
 const handleSubmit = () => {
-  // If majority of users vote to skip, reset game
-  console.log(skip_count + " > " + (usernames.size / 2) + " = " + (skip_count > (usernames.size / 2)));
+  if (usernames.size === Object.keys(submissions).length) {
+    // everybody has submitted
+    stateTransition(VOTE);
 
-  if (skip_count > (usernames.size / 2)) {
+  } else if (skip_count > (usernames.size / 2)) {
+    // majority want to skip current image
     resetGame(true);
 
   } else if(current_time < 0) {
@@ -253,7 +265,6 @@ io.on('connection', (socket) => {
   socket.on('user_skip', () => {
     if (addedUser) {
       skip_count += 1;
-      console.log("skip_count: " + skip_count);
 
       io.emit('skip_count', {
         skip_count: skip_count

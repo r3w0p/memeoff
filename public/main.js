@@ -17,23 +17,41 @@ $(function() {
       WINNER:  $('#game-area-winner')
   };
 
-  // Init variables
-  let $window = $(window);
-  
-  let $inputGame = $('#input-game');
-  let $inputUsername = $('#input-username');
-  let $inputCurrent = $inputUsername.focus();
 
+  /* LOGIN */
   let $loginPage = $('#login-page');
+  let $loginUsernameInput = $('#input-username');
+  let $loginErrorMessage = $("#login-page-error");
+
+  /* GAME */
   let $gamePage = $('#game-page');
+  let gameCurrentState = "";
+
+  // Navbar
+  let $navbarIconLoading = $('#nav-timer-loading');
+  let $navbarTimer = $('#nav-timer');
+  let $navbarPlayerListLink = $("#player-list-link");
+  let $navbarPlayerList = $("#player-list");
+  let navbarTimerSeconds = -1;
+
+  // Submit
+  let $gameSubmitInput = $('#input-game');
+  let $gameSubmitSend = $('#input-game-submit');
+  let $gameSubmitSkip = $('#input-game-skip');
+  let $gameSubmitImgContainer = $('#submit-image-container');
+
+  /* ALL */
+  let $window = $(window);
+  let $inputCurrent = $loginUsernameInput.focus();
+
 
   let username;
   let connected = false;
   let usernames = new Set();
   let socket = io();
 
-  let current_state = "";
-  let timer_seconds = -1;
+
+
 
   let current_image = "";
 
@@ -45,21 +63,21 @@ $(function() {
     if (!username) return;
 
     if (connected) {
-      if (timer_seconds > -1)
-        timer_seconds -= 1;
+      if (navbarTimerSeconds > -1)
+        navbarTimerSeconds -= 1;
 
-      setNotif(timer_seconds > -1 ? timer_seconds + "..." : "...", true);
+      setNotif(navbarTimerSeconds > -1 ? navbarTimerSeconds + "..." : "...", true);
     } else
       setNotif("Disconnected.", false);
   }, 1000);
 
   const setNotif = (message, show_loading) => {
     if (show_loading)
-      $('#nav-timer-loading').show();
+      $navbarIconLoading.show();
     else
-      $('#nav-timer-loading').hide();
+      $navbarIconLoading.hide();
 
-    $('#nav-timer').html(message);
+    $navbarTimer.html(message);
   };
 
   const log = (message) => {
@@ -79,17 +97,12 @@ $(function() {
 
   // Sends a chat message
   const sendLoginRequest = () => {
-    let username = cleanInput($inputUsername.val().trim());
+    let username = cleanInput($loginUsernameInput.val().trim());
 
     if (username)
       socket.emit('login_request', username);
     else
-      $("#login-page-error").html("Invalid username.");
-  };
-
-  // Show error message on login failure
-  const showLoginErrorMessage = (message) => {
-    $("#login-page-error").html(message);
+      $loginErrorMessage.html("Invalid username.");
   };
 
   // Sets the client's username
@@ -98,7 +111,7 @@ $(function() {
       $loginPage.off('click');
       $gamePage.show();
       $loginPage.fadeOut();
-      $inputCurrent = $inputGame.focus();
+      $inputCurrent = $gameSubmitInput.focus();
     }
   };
 
@@ -109,22 +122,45 @@ $(function() {
 
   const resetGame = () => {
     // TODO reset all game variables
-
-    // submit
-    $('#input-game').prop('disabled', false);
-    $('#input-game').val("");
-    $('#input-game-submit').removeClass('disabled');
-    $('#input-game-skip').removeClass('disabled');
-    $('#submit-image-container').html("");
-    current_image = "";
-
+    resetNavbar();
+    resetSubmit();
   };
+
+
+  const resetNavbar = () => {
+    $navbarIconLoading.hide();
+    $navbarTimer.html("");
+    navbarTimerSeconds = -1;
+  };
+
+
+  const resetSubmit = () => {
+    // Text box
+    $gameSubmitInput.prop('disabled', false);
+    $gameSubmitInput.val("");
+
+    // Send button
+    $gameSubmitSend.removeClass('disabled');
+    $gameSubmitSend.attr('data-badge', "0");
+
+    // Skip button
+    $gameSubmitSkip.removeClass('disabled');
+    $gameSubmitSkip.attr('data-badge', "0");
+
+    // Image
+    $gameSubmitImgContainer.html("");
+    current_image = "";
+  };
+
+
+
+
 
   // Sends a chat message
   const sendUserSubmission = () => {
     if(!username) return;
 
-    let text = cleanInput($inputGame.val().trim());
+    let text = cleanInput($gameSubmitInput.val().trim());
 
     if (text && connected) {
       socket.emit('user_submission', {
@@ -143,12 +179,12 @@ $(function() {
       li_str += '<li class="pure-menu-item"><span class="pure-menu-link">' + item + '</span></li>';
     });
 
-    $("#player-list-link").html("Players (" + arr_usernames.length + ")");
-    $("#player-list").html(li_str);
+    $navbarPlayerListLink.html("Players (" + arr_usernames.length + ")");
+    $navbarPlayerList.html(li_str);
   };
 
   const stateTransition = (name, time) => {
-    if (current_state === name) return;
+    if (gameCurrentState === name) return;
 
     for(let key in STATES)
       if (key !== name) {
@@ -160,8 +196,8 @@ $(function() {
     STATES[name].on('click');
     STATES[name].fadeIn();
 
-    timer_seconds = time;
-    current_state = name;
+    navbarTimerSeconds = time;
+    gameCurrentState = name;
   };
 
 
@@ -177,7 +213,7 @@ $(function() {
 
     // on ENTER key
     if (event.which === 13) {
-      if ($inputCurrent === $inputUsername)
+      if ($inputCurrent === $loginUsernameInput)
         sendLoginRequest();
     }
   });
@@ -185,16 +221,12 @@ $(function() {
 
   /* CLICK EVENTS */
 
-  $("#input-game-submit").click(function(){
+  $gameSubmitSend.click(function() {
     sendUserSubmission();
   });
 
-  $("#input-game-skip").click(function(){
-    $('#input-game').prop('disabled', true);
-    $('#input-game').val("");
-    $('#input-game-submit').addClass('disabled');
+  $gameSubmitSkip.click(function() {
     $('#input-game-skip').addClass('disabled');
-
     socket.emit('user_skip');
   });
 
@@ -206,42 +238,39 @@ $(function() {
     log('Transition: ' + data.current_state);
 
     if (data.current_state in STATES) {
-
-      if(data.current_state === START) {
+      if(data.current_state === START)
         resetGame();
-      }
-
-      if(data.current_state === SUBMIT) {
-        log("Loading image...");
-
-        current_image = data.bundle.image;
-
-        $('#submit-image-container').html(
-            $('<img>',{
-              class: 'img-responsive',
-              src: current_image,
-              width: '100%'
-            })
-        );
-      }
 
       stateTransition(data.current_state, data.current_time);
     }
   });
 
+  socket.on('new_image', (data) => {
+    log("New image.");
+    current_image = data.image;
+
+    $gameSubmitImgContainer.html(
+        $('<img>',{
+          class: 'img-responsive',
+          src: current_image,
+          width: '100%'
+        })
+    );
+  });
+
   socket.on('submission_received', (data) => {
-    $('#input-game').prop('disabled', true);
-    $('#input-game').val(data.text);
-    $('#input-game-submit').addClass('disabled');
-    $('#input-game-skip').addClass('disabled');
+    $gameSubmitInput.prop('disabled', true);
+    $gameSubmitInput.val(data.text);
+    $gameSubmitSend.addClass('disabled');
+    $gameSubmitSkip.addClass('disabled');
   });
 
   socket.on('submission_count', (data) => {
-    $('#input-game-submit').attr('data-badge', data.submission_count);
+    $gameSubmitSend.attr('data-badge', data.submission_count);
   });
 
   socket.on('skip_count', (data) => {
-    $('#input-game-skip').attr('data-badge', data.skip_count);
+    $gameSubmitSkip.attr('data-badge', data.skip_count);
   });
 
   socket.on('login_success', (data) => {
@@ -257,7 +286,7 @@ $(function() {
 
   socket.on('login_failure', (data) => {
     log('Login failed.');
-    showLoginErrorMessage(data.message)
+    $loginErrorMessage.html(data.message)
   });
 
   socket.on('user_joined', (data) => {
