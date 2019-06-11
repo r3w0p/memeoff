@@ -9,8 +9,7 @@ Meme battling with friends.
 
 ## How to Play
 
-1) Players are shown a random [reaction image](https://knowyourmeme.com/memes/reaction-images)
-scraped from the web.
+1) Players are shown a random image from a random subreddit in `subreddits.txt`.
 2) They submit a caption to go with the image.
 3) Players vote for their favourite meme by choosing an appropriate reaction: 😍 😆 😮 😢 😠
 4) The meme(s) with the most votes win.

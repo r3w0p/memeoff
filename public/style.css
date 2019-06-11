@@ -26,11 +26,27 @@ textarea {
   box-shadow: 0px 0px 8px 0px rgba(136,136,136,1)
 }
 
+.badge[data-badge]:after {
+  content:attr(data-badge);
+  color: white;
+  width: auto;
+  height: auto;
+  padding: 4px;
+  text-align: center;
+  float: left;
+}
+
+
+
 
 /* Mobile First */
 
 /* Extra small devices (phones, 600px and down) */
 @media only screen and (max-width: 600px) {
+  .badge[data-badge]:after {
+    font-size: 1.2em;
+  }
+
   .login-text {
     font-size: 0.5em;
   }
@@ -63,6 +79,10 @@ textarea {
 
 /* Small devices (portrait tablets and large phones, 600px and up) */
 @media only screen and (min-width: 600px) {
+  .badge[data-badge]:after {
+    font-size: 1.5em;
+  }
+
   .login-text {
     font-size: 1em;
   }
@@ -95,6 +115,10 @@ textarea {
 
 /* Medium devices (landscape tablets, 768px and up) */
 @media only screen and (min-width: 768px) {
+  .badge[data-badge]:after {
+    font-size: 2em;
+  }
+
   .login-text {
     font-size: 1.8em;
   }
@@ -127,6 +151,10 @@ textarea {
 
 /* Large devices (laptops/desktops, 992px and up) */
 @media only screen and (min-width: 992px) {
+  .badge[data-badge]:after {
+    font-size: 2.5em;
+  }
+
   .login-text {
     font-size: 2em;
   }
