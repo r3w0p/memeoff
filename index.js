@@ -3,6 +3,7 @@
 const minimist = require('minimist');
 const request = require('request').defaults({ encoding: null });
 const randomPuppy = require('random-puppy');
+const Jimp = require('jimp');
 
 const express = require('express');
 const app = express();
@@ -14,11 +15,56 @@ const io = require('socket.io')(server);
 let args = minimist(process.argv.slice(2), {
   default: {
     port: 3000,
-    submit: 60,
-    vote: 30,
-    winner: 15
+    min_players: 3,
+    max_players: 10,
+    min_submit: 2,
+    dur_submit: 60,
+    dur_vote: 30,
+    dur_winner: 15,
+    img_width: 400
   },
 });
+
+const validateArgument = (invalidCondition, messageOnTrue) => {
+  if (invalidCondition) {
+    console.error(messageOnTrue);
+    process.exit(1);
+  }
+};
+
+// --port
+validateArgument(args.port < 0 || args.port > 65535,
+    "Port must be in the range 0 <= n <= 65535.");
+
+// --min_players
+validateArgument(args.min_players < 3 || args.min_players > 100,
+    "Minimum players must be in the range 0 <= n <= 100.");
+
+// --max_players
+validateArgument(args.max_players < args.min_players || args.max_players > 100,
+    "Maximum players must be in the range min_players <= n <= 100.");
+
+// --min_submit
+validateArgument(args.min_submit < 2 || args.min_submit > args.min_players,
+    "Minimum submissions must be in the range 2 <= n <= min_players.");
+
+// --dur_submit
+validateArgument(args.dur_submit < 1 || args.dur_submit > 1800,
+    "Submit duration must be in the range 1 <= n <= 1800.");
+
+// --dur_vote
+validateArgument(args.dur_vote < 1 || args.dur_vote > 1800,
+    "Vote duration must be in the range 1 <= n <= 1800.");
+
+// --dur_winner
+validateArgument(args.dur_winner < 1 || args.dur_winner > 1800,
+    "Winner duration must be in the range 1 <= n <= 1800.");
+
+// --img_width
+validateArgument(args.img_width < 100 || args.img_width > 2000,
+    "Image width must be in the range 100 <= n <= 2000.");
+
+
 
 
 /* SERVER SETUP */
@@ -32,8 +78,24 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 /* CONSTANTS */
 
-const MIN_PLAYERS = 3;
-const MIN_SUBMISSIONS = 2;
+const CONNECTION          = 'connection';
+const DISCONNECT          = 'disconnect';
+const RECONNECT           = 'reconnect';
+const RECONNECT_ERROR     = 'reconnect_error';
+const LOGIN_REQUEST       = 'login_request';
+const LOGIN_FAILURE       = 'login_failure';
+const LOGIN_SUCCESS       = 'login_success';
+const USER_JOINED         = 'user_joined';
+const USER_LEFT           = 'user_left';
+const USER_SUBMISSION     = 'user_submission';
+const SUBMISSION_RECEIVED = 'submission_received';
+const SUBMISSION_COUNT    = 'submission_count';
+const USER_SKIP           = 'user_skip';
+const SKIP_COUNT          = 'skip_count';
+const TRANSITION          = 'transition';
+const NEW_IMAGE           = 'new_image';
+
+const ROOM_AUTH = "room_auth";
 
 const PLAYERS = "PLAYERS";
 const START   = "START";
@@ -44,15 +106,14 @@ const WINNER  = "WINNER";
 const STATES = {
   PLAYERS: {"time": -1},
   START:   {"time": 5},
-  SUBMIT:  {"time": args.submit},
-  VOTE:    {"time": args.vote},
-  WINNER:  {"time": args.winner}
+  SUBMIT:  {"time": args.dur_submit},
+  VOTE:    {"time": args.dur_vote},
+  WINNER:  {"time": args.dur_winner}
 };
 
 const SUBREDDITS = [
     "reactionpics",
-    "reactiongifs",
-    "shittyreactiongifs"
+    "mfw"
 ];
 
 
@@ -74,7 +135,7 @@ setInterval(() => {
     current_time -= 1;
 
   // Not enough players
-  if (usernames.size < MIN_PLAYERS) {
+  if (usernames.size < args.min_players) {
     waitForMorePlayers();
 
   } else {
@@ -101,7 +162,7 @@ const stateTransition = (state_name, bundle) => {
   current_state = state_name;
   current_time = STATES[current_state].time;
 
-  io.emit('transition', {
+  io.emit(TRANSITION, {
     current_state: current_state,
     current_time: current_time,
     bundle: bundle || {}
@@ -137,7 +198,7 @@ const handleStart = () => {
 
   } else if (!sent_new_image) {
     // send new image
-    io.emit('new_image', {
+    io.emit(NEW_IMAGE, {
       image: current_image
     });
 
@@ -163,7 +224,7 @@ const handleSubmit = () => {
     resetGame(true);
 
   } else if(current_time < 0) {
-    if (num_submissions < MIN_SUBMISSIONS)
+    if (num_submissions < args.min_submit)
       resetGame();
     else
       stateTransition(VOTE);
@@ -201,32 +262,61 @@ const areNoVotes = () => {
 
 
 const getNewImage = () => {
+  // try to download new image if not already doing so
+  // and one hasn't already been downloaded
   if(!attempting_download && !current_image) {
     attempting_download = true;
 
-    randomPuppy(getRandomItem(SUBREDDITS)).then(url => {
-      request.get(url, function (error, response, body) {
-        if (!error && response.statusCode === 200) {
-          current_image = "data:" + response.headers["content-type"] + ";base64," + new Buffer(body).toString('base64');
-        }
+    // get random image url from random subreddit
+    randomPuppy(getRandomItem(SUBREDDITS))
+        .then(imageURL => {
 
-        attempting_download = false;
+      // download the image
+      request.get(imageURL, function (error, response, body) {
+        if (!error && response.statusCode === 200) {
+
+          // modify image
+          Jimp.read(new Buffer(body))
+              .then(img => {
+
+                // resize image and convert to base64
+                img.resize(args.img_width, Jimp.AUTO).getBase64(Jimp.AUTO, function(e, img64) {
+                  if(!e)
+                    current_image = img64; // store base64 image
+
+                  attempting_download = false;
+                });
+
+              }).catch(err => { attempting_download = false; }); // jimp read
+
+        } else attempting_download = false; // request error
       });
-    });
+
+    }).catch(err => { attempting_download = false; }); // randomPuppy
   }
 };
 
 
 
-io.on('connection', (socket) => {
+
+io.on(CONNECTION, (socket) => {
   let addedUser = false;
 
   // attempts to add new username
-  socket.on('login_request', (username) => {
+  socket.on(LOGIN_REQUEST, (username) => {
     if (addedUser) return;
-    
+
+    if (usernames.size >= args.max_players) {
+      socket.emit(LOGIN_FAILURE, {
+        username: username,
+        message: "Player limit reached. Try again later."
+      });
+
+      return;
+    }
+
     if (usernames.has(username)) {
-      socket.emit('login_failure', {
+      socket.emit(LOGIN_FAILURE, {
         username: username,
         message: "Username already taken."
       });
@@ -234,13 +324,13 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // store username in socket session for this client
+    // add user to game
     socket.username = username;
     usernames.add(username);
-
+    socket.join(ROOM_AUTH);
     addedUser = true;
 
-    socket.emit('login_success', {
+    socket.emit(LOGIN_SUCCESS, {
       username: socket.username,
       all_usernames: Array.from(usernames),
       current_state: current_state,
@@ -248,45 +338,47 @@ io.on('connection', (socket) => {
       current_image: current_image
     });
 
-    socket.broadcast.emit('user_joined', {
+    // notify players
+    io.to(ROOM_AUTH).emit(USER_JOINED, {
       username: socket.username
     });
   });
 
   // when the user disconnects.. perform this
-  socket.on('disconnect', () => {
+  socket.on(DISCONNECT, () => {
     if (addedUser) {
+      // remove user from game
       usernames.delete(socket.username);
-      delete submissions[socket.username];
+      socket.leave(ROOM_AUTH);
 
-      // echo globally that this client has left
-      socket.broadcast.emit('user_left', {
+      // notify players
+      io.to(ROOM_AUTH).emit(USER_LEFT, {
         username: socket.username
       });
     }
   });
 
-  socket.on('user_submission', (data) => {
+  socket.on(USER_SUBMISSION, (data) => {
     if (addedUser) {
       submissions[data.username] = data.text;
       console.log(submissions);
 
-      socket.emit('submission_received', {
+      socket.emit(SUBMISSION_RECEIVED, {
         username: socket.username,
         text: data.text
       });
 
-      io.emit('submission_count', {
+      io.to(ROOM_AUTH).emit(SUBMISSION_COUNT, {
         submission_count: Object.keys(submissions).length
       });
     }
   });
 
-  socket.on('user_skip', () => {
+  socket.on(USER_SKIP, () => {
     if (addedUser) {
       skip_count += 1;
 
-      io.emit('skip_count', {
+      io.to(ROOM_AUTH).emit(SKIP_COUNT, {
         skip_count: skip_count
       });
     }

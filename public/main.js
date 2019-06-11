@@ -1,6 +1,24 @@
 $(function() {
 
-  // Init constants
+  /* CONSTANTS */
+
+  const CONNECTION          = 'connection';
+  const DISCONNECT          = 'disconnect';
+  const RECONNECT           = 'reconnect';
+  const RECONNECT_ERROR     = 'reconnect_error';
+  const LOGIN_REQUEST       = 'login_request';
+  const LOGIN_FAILURE       = 'login_failure';
+  const LOGIN_SUCCESS       = 'login_success';
+  const USER_JOINED         = 'user_joined';
+  const USER_LEFT           = 'user_left';
+  const USER_SUBMISSION     = 'user_submission';
+  const SUBMISSION_RECEIVED = 'submission_received';
+  const SUBMISSION_COUNT    = 'submission_count';
+  const USER_SKIP           = 'user_skip';
+  const SKIP_COUNT          = 'skip_count';
+  const TRANSITION          = 'transition';
+  const NEW_IMAGE           = 'new_image';
+
   const LOGGING = true;
 
   const PLAYERS = "PLAYERS";
@@ -18,12 +36,14 @@ $(function() {
   };
 
 
-  /* LOGIN */
+  /* VARIABLES */
+
+  // Login
   let $loginPage = $('#login-page');
   let $loginUsernameInput = $('#input-username');
   let $loginErrorMessage = $("#login-page-error");
 
-  /* GAME */
+  // Game
   let $gamePage = $('#game-page');
   let gameCurrentState = "";
 
@@ -41,13 +61,13 @@ $(function() {
   let $gameSubmitImgContainer = $('#submit-image-container');
   let gameCurrentImage = "";
 
-  /* ALL */
+  // Other
   let $window = $(window);
   let $inputCurrent = $loginUsernameInput.focus();
 
   let waitingForLoginResponse = false;
-  let username;
-  let connected = false;
+  let username = "";
+  let auth = false;
   let usernames = new Set();
   let socket = io();
 
@@ -59,7 +79,7 @@ $(function() {
   setInterval(function() {
     if (!username) return;
 
-    if (connected) {
+    if (auth) {
       if (navbarTimerSeconds > -1)
         navbarTimerSeconds -= 1;
 
@@ -98,10 +118,10 @@ $(function() {
 
   // Sends a chat message
   const sendLoginRequest = () => {
-    let username = cleanInput($loginUsernameInput.val().trim());
+    let clean_username = cleanInput($loginUsernameInput.val().trim());
 
-    if (username)
-      socket.emit('login_request', username);
+    if (clean_username)
+      socket.emit(LOGIN_REQUEST, clean_username);
     else
       $loginErrorMessage.html("Invalid username.");
   };
@@ -153,17 +173,14 @@ $(function() {
   };
 
 
-
-
-
   // Sends a chat message
   const sendUserSubmission = () => {
     if(!username) return;
 
     let text = cleanInput($gameSubmitInput.val().trim());
 
-    if (text && connected) {
-      socket.emit('user_submission', {
+    if (text && auth) {
+      socket.emit(USER_SUBMISSION, {
         username: username,
         text: text
       });
@@ -224,6 +241,8 @@ $(function() {
   });
 
 
+
+
   /* CLICK EVENTS */
 
   $gameSubmitSend.click(function() {
@@ -232,7 +251,7 @@ $(function() {
 
   $gameSubmitSkip.click(function() {
     $gameSubmitSkip.addClass('disabled');
-    socket.emit('user_skip');
+    socket.emit(USER_SKIP);
   });
 
   $navbarLogo.click(function() {
@@ -240,42 +259,52 @@ $(function() {
   });
 
 
+
+
   /* SOCKET EVENTS */
 
-  socket.on('transition', (data) => {
-    log('Transition: ' + data.current_state);
+  socket.on(TRANSITION, (data) => {
+    if(auth) {
+      if (data.current_state in STATES) {
+        log('Transition: ' + data.current_state + '.');
 
-    if (data.current_state in STATES) {
-      if(data.current_state === START)
-        resetGame();
+        if (data.current_state === START)
+          resetGame();
 
-      stateTransition(data.current_state, data.current_time);
+        stateTransition(data.current_state, data.current_time);
+      }
     }
   });
 
-  socket.on('new_image', (data) => {
-    log("New image.");
-    setGameImage(data.image);
+  socket.on(NEW_IMAGE, (data) => {
+    if(auth) {
+      log("New image.");
+      setGameImage(data.image);
+    }
   });
 
-  socket.on('submission_received', (data) => {
-    $gameSubmitInput.prop('disabled', true);
-    $gameSubmitInput.val(data.text);
-    $gameSubmitSend.addClass('disabled');
-    $gameSubmitSkip.addClass('disabled');
+  socket.on(SUBMISSION_RECEIVED, (data) => {
+    if(auth) {
+      $gameSubmitInput.prop('disabled', true);
+      $gameSubmitInput.val(data.text);
+      $gameSubmitSend.addClass('disabled');
+      $gameSubmitSkip.addClass('disabled');
+    }
   });
 
-  socket.on('submission_count', (data) => {
-    $gameSubmitSend.attr('data-badge', data.submission_count);
+  socket.on(SUBMISSION_COUNT, (data) => {
+    if(auth)
+      $gameSubmitSend.attr('data-badge', data.submission_count);
   });
 
-  socket.on('skip_count', (data) => {
-    $gameSubmitSkip.attr('data-badge', data.skip_count);
+  socket.on(SKIP_COUNT, (data) => {
+    if(auth)
+      $gameSubmitSkip.attr('data-badge', data.skip_count);
   });
 
-  socket.on('login_success', (data) => {
-    connected = true;
+  socket.on(LOGIN_SUCCESS, (data) => {
     username = data.username;
+    auth = true;
     log('Login success.');
 
     data.all_usernames.forEach(item => usernames.add(item));
@@ -287,39 +316,39 @@ $(function() {
     waitingForLoginResponse = false;
   });
 
-  socket.on('login_failure', (data) => {
+  socket.on(LOGIN_FAILURE, (data) => {
     log('Login failed.');
     $loginErrorMessage.html(data.message);
     waitingForLoginResponse = false;
   });
 
-  socket.on('user_joined', (data) => {
-    if (data.username !== username) {
+  socket.on(USER_JOINED, (data) => {
+    if (auth && username !== data.username) {
       log('User joined: ' + data.username);
       usernames.add(data.username);
       refreshPlayerList();
     }
   });
 
-  socket.on('user_left', (data) => {
-    if (data.username !== username) {
+  socket.on(USER_LEFT, (data) => {
+    if (auth && username !== data.username) {
       log('User left: ' + data.username);
       usernames.delete(data.username);
       refreshPlayerList();
     }
   });
 
-  socket.on('disconnect', () => {
+  socket.on(DISCONNECT, () => {
     log('Disconnected.');
-    connected = false;
+    auth = false;
   });
 
-  socket.on('reconnect', () => {
+  socket.on(RECONNECT, () => {
     log('Reconnected. Refreshing...');
     window.location.reload();
   });
 
-  socket.on('reconnect_error', () => {
+  socket.on(RECONNECT_ERROR, () => {
     log('Reconnect failed.');
   });
 
