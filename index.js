@@ -1,9 +1,10 @@
 'use strict';
 
 const minimist = require('minimist');
-const request = require('request').defaults({ encoding: null });
 const randomPuppy = require('random-puppy');
+const request = require('request').defaults({ encoding: null });
 const Jimp = require('jimp');
+const fs = require('fs');
 
 const express = require('express');
 const app = express();
@@ -21,7 +22,9 @@ let args = minimist(process.argv.slice(2), {
     dur_submit: 60,
     dur_vote: 30,
     dur_winner: 15,
-    img_width: 400
+    img_width: 400,
+    subreds: 'subreddits.txt',
+    delim: '\n'
   },
 });
 
@@ -31,6 +34,34 @@ const validateArgument = (invalidCondition, messageOnTrue) => {
     process.exit(1);
   }
 };
+
+const getSubreddits = (file_subred, delim) => {
+  let subred;
+
+  try {
+    subred = fs.readFileSync(file_subred, 'utf8')
+        .split(delim)
+        .map(function(item) {
+          return item.trim();
+        })
+        .filter(function (item) {
+          return item;
+        });
+
+  } catch (err) {
+    console.error("Failed to get subreddits from '" + args.subreds + "': " + err.message);
+    process.exit(1);
+  }
+
+  if (!subred || subred.length === 0) {
+    console.error("No subreddits found in '" + args.subreds + "'.");
+    process.exit(1);
+  }
+
+  return subred;
+};
+
+
 
 // --port
 validateArgument(args.port < 0 || args.port > 65535,
@@ -64,6 +95,13 @@ validateArgument(args.dur_winner < 1 || args.dur_winner > 1800,
 validateArgument(args.img_width < 100 || args.img_width > 2000,
     "Image width must be in the range 100 <= n <= 2000.");
 
+// --subreds
+validateArgument(!args.subreds,
+    "A subreddit file must be specified.");
+
+// --delim
+validateArgument(!args.delim,
+    "A subreddit file delimiter must be specified.");
 
 
 
@@ -111,14 +149,11 @@ const STATES = {
   WINNER:  {"time": args.dur_winner}
 };
 
-const SUBREDDITS = [
-    "reactionpics",
-    "mfw"
-];
+
 
 
 /* VARIABLES */
-
+let subreddits = getSubreddits(args.subreds, args.delim);
 let usernames = new Set();
 let current_state = "";
 let current_time = -1;
@@ -191,7 +226,6 @@ const resetGame = (force) => {
 
 
 const handleStart = () => {
-
   if (!current_image) {
     // keep trying to get a new image
     getNewImage();
@@ -268,7 +302,7 @@ const getNewImage = () => {
     attempting_download = true;
 
     // get random image url from random subreddit
-    randomPuppy(getRandomItem(SUBREDDITS))
+    randomPuppy(getRandomItem(subreddits))
         .then(imageURL => {
 
       // download the image
@@ -300,11 +334,11 @@ const getNewImage = () => {
 
 
 io.on(CONNECTION, (socket) => {
-  let addedUser = false;
+  let auth = false;
 
   // attempts to add new username
   socket.on(LOGIN_REQUEST, (username) => {
-    if (addedUser) return;
+    if (auth) return;
 
     if (usernames.size >= args.max_players) {
       socket.emit(LOGIN_FAILURE, {
@@ -328,7 +362,7 @@ io.on(CONNECTION, (socket) => {
     socket.username = username;
     usernames.add(username);
     socket.join(ROOM_AUTH);
-    addedUser = true;
+    auth = true;
 
     socket.emit(LOGIN_SUCCESS, {
       username: socket.username,
@@ -344,44 +378,47 @@ io.on(CONNECTION, (socket) => {
     });
   });
 
-  // when the user disconnects.. perform this
   socket.on(DISCONNECT, () => {
-    if (addedUser) {
-      // remove user from game
-      usernames.delete(socket.username);
-      socket.leave(ROOM_AUTH);
+    if (!auth) return;
 
-      // notify players
-      io.to(ROOM_AUTH).emit(USER_LEFT, {
-        username: socket.username
-      });
-    }
+    // remove user from game
+    usernames.delete(socket.username);
+    delete usernames[socket.username];
+    socket.leave(ROOM_AUTH);
+
+    auth = false;
+
+    // notify players
+    io.to(ROOM_AUTH).emit(USER_LEFT, {
+      username: socket.username
+    });
   });
 
   socket.on(USER_SUBMISSION, (data) => {
-    if (addedUser) {
-      submissions[data.username] = data.text;
-      console.log(submissions);
+    if (!auth) return;
 
-      socket.emit(SUBMISSION_RECEIVED, {
-        username: socket.username,
-        text: data.text
-      });
+    submissions[data.username] = data.text;
+    console.log(submissions);
 
-      io.to(ROOM_AUTH).emit(SUBMISSION_COUNT, {
-        submission_count: Object.keys(submissions).length
-      });
-    }
+    socket.emit(SUBMISSION_RECEIVED, {
+      username: socket.username,
+      text: data.text
+    });
+
+    io.to(ROOM_AUTH).emit(SUBMISSION_COUNT, {
+      submission_count: Object.keys(submissions).length
+    });
   });
 
   socket.on(USER_SKIP, () => {
-    if (addedUser) {
-      skip_count += 1;
+    if (!auth) return;
 
-      io.to(ROOM_AUTH).emit(SKIP_COUNT, {
-        skip_count: skip_count
-      });
-    }
+    skip_count += 1;
+
+    io.to(ROOM_AUTH).emit(SKIP_COUNT, {
+      skip_count: skip_count
+    });
   });
 
 });
+
