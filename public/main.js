@@ -18,6 +18,7 @@ $(function() {
   const SKIP_COUNT          = 'skip_count';
   const TRANSITION          = 'transition';
   const NEW_IMAGE           = 'new_image';
+  const USER_VOTE           = 'user_vote';
 
   const LOGGING = true;
 
@@ -243,23 +244,23 @@ $(function() {
                     $('<table>').html(
                         $('<td>').html(
                             $('<button>', {
-                              class: 'btn btn-link memereact'
+                              class: 'btn btn-link memereact vote'
                             }).html('😍').attr('data-sub-id', sub_id).attr('data-react', 'love')
                         ).append(
                             $('<button>', {
-                              class: 'btn btn-link memereact'
+                              class: 'btn btn-link memereact vote'
                             }).html('😆').attr('data-sub-id', sub_id).attr('data-react', 'funny')
                         ).append(
                             $('<button>', {
-                              class: 'btn btn-link memereact'
+                              class: 'btn btn-link memereact vote'
                             }).html('😮').attr('data-sub-id', sub_id).attr('data-react', 'shock')
                         ).append(
                             $('<button>', {
-                              class: 'btn btn-link memereact'
+                              class: 'btn btn-link memereact vote'
                             }).html('😢').attr('data-sub-id', sub_id).attr('data-react', 'sad')
                         ).append(
                             $('<button>', {
-                              class: 'btn btn-link memereact'
+                              class: 'btn btn-link memereact vote'
                             }).html('😠').attr('data-sub-id', sub_id).attr('data-react', 'angry')
                         )
                     )
@@ -332,6 +333,15 @@ $(function() {
 
   $navbarLogo.click(function() {
     window.open('https://github.com/r3w0p/memeoff', '_blank');
+  });
+
+  $gameVoteCardContainer.on('click', '.memereact.vote', function() {
+    $gameVoteCardContainer.find('.memereact.vote').addClass('disabled');
+
+    socket.emit(USER_VOTE, {
+      id: $(this).attr('data-sub-id'),
+      react: $(this).attr('data-react')
+    });
   });
 
 

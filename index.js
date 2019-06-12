@@ -132,6 +132,7 @@ const USER_SKIP           = 'user_skip';
 const SKIP_COUNT          = 'skip_count';
 const TRANSITION          = 'transition';
 const NEW_IMAGE           = 'new_image';
+const USER_VOTE           = 'user_vote';
 
 const ROOM_AUTH = "room_auth";
 
@@ -162,6 +163,7 @@ let current_image = "";
 let sent_new_image = false;
 let attempting_download = false;
 let submissions = [];
+let votes = [];
 let skip_count = 0;
 
 
@@ -416,7 +418,7 @@ io.on(CONNECTION, (socket) => {
   socket.on(USER_SUBMISSION, (data) => {
     if (!auth) return;
 
-    submissions.push({name: data.username, text: data.text});
+    submissions.push({name: socket.username, text: data.text});
     console.log(submissions);
 
     socket.emit(SUBMISSION_RECEIVED, {
@@ -437,6 +439,13 @@ io.on(CONNECTION, (socket) => {
     io.to(ROOM_AUTH).emit(SKIP_COUNT, {
       skip_count: skip_count
     });
+  });
+
+  socket.on(USER_VOTE, (data) => {
+    if (!auth) return;
+
+    votes.push({name: socket.username, id: data.id, react: data.react});
+    console.log(votes);
   });
 
 });
