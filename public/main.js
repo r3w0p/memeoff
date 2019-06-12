@@ -129,8 +129,10 @@ $(function() {
 
     if (clean_username)
       socket.emit(LOGIN_REQUEST, clean_username);
-    else
+    else {
       $loginErrorMessage.html("Invalid username.");
+      waitingForLoginResponse = false;
+    }
   };
 
   // Sets the client's username
@@ -251,27 +253,37 @@ $(function() {
                   class: 'card-footer memereact-container'
                 }).html(
                     $('<table>').html(
-                        $('<td>').html(
-                            $('<button>', {
-                              class: 'btn btn-link memereact vote'
-                            }).html('😍').attr('data-sub-id', sub_id).attr('data-react', 'love')
+                        $('<tr>').html(
+                            $('<td>').html(
+                                $('<button>', {
+                                    class: 'btn btn-link memereact vote'
+                                }).html('😍').attr('data-sub-id', sub_id).attr('data-react', 'love')
+                            )
                         ).append(
-                            $('<button>', {
-                              class: 'btn btn-link memereact vote'
-                            }).html('😆').attr('data-sub-id', sub_id).attr('data-react', 'funny')
+                            $('<td>').html(
+                                $('<button>', {
+                                    class: 'btn btn-link memereact vote'
+                                }).html('😆').attr('data-sub-id', sub_id).attr('data-react', 'funny')
+                            )
                         ).append(
-                            $('<button>', {
-                              class: 'btn btn-link memereact vote'
-                            }).html('😮').attr('data-sub-id', sub_id).attr('data-react', 'shock')
+                            $('<td>').html(
+                                $('<button>', {
+                                    class: 'btn btn-link memereact vote'
+                                }).html('😮').attr('data-sub-id', sub_id).attr('data-react', 'shock')
+                            )
                         ).append(
-                            $('<button>', {
-                              class: 'btn btn-link memereact vote'
-                            }).html('😢').attr('data-sub-id', sub_id).attr('data-react', 'sad')
-                        ).append(
-                            $('<button>', {
-                              class: 'btn btn-link memereact vote'
-                            }).html('😠').attr('data-sub-id', sub_id).attr('data-react', 'angry')
-                        )
+                            $('<td>').html(
+                                $('<button>', {
+                                    class: 'btn btn-link memereact vote'
+                                }).html('😢').attr('data-sub-id', sub_id).attr('data-react', 'sad')
+                            )
+                        ).append($('<td>').html(
+                            $('<td>').html(
+                                $('<button>', {
+                                    class: 'btn btn-link memereact vote'
+                                }).html('😠').attr('data-sub-id', sub_id).attr('data-react', 'angry')
+                            )
+                        ))
                     )
                 )
             )
@@ -318,28 +330,41 @@ $(function() {
                   class: 'card-footer memereact-container'
                 }).html(
                     $('<table>').html(
-                        $('<td>').html(
-                            $('<button>', {
-                              class: 'btn btn-link memereact winner unclickable badge'
-                            }).html('😍').attr('data-badge', reacts.love)
+                        $('<tr>').html(
+                            $('<td>').html(
+                                $('<button>', {class: 'btn btn-link memereact winner unclickable'}).html('😍')
+                            )
                         ).append(
-                            $('<button>', {
-                              class: 'btn btn-link memereact winner unclickable badge'
-                            }).html('😆').attr('data-badge', reacts.funny)
+                            $('<td>').html(
+                                $('<button>', {class: 'btn btn-link memereact winner unclickable'}).html('😆')
+                            )
                         ).append(
-                            $('<button>', {
-                              class: 'btn btn-link memereact winner unclickable badge'
-                            }).html('😮').attr('data-badge', reacts.shock)
+                            $('<td>').html(
+                                $('<button>', {class: 'btn btn-link memereact winner unclickable'}).html('😮')
+                            )
                         ).append(
-                            $('<button>', {
-                              class: 'btn btn-link memereact winner unclickable badge'
-                            }).html('😢').attr('data-badge', reacts.sad)
+                            $('<td>').html(
+                                $('<button>', {class: 'btn btn-link memereact winner unclickable'}).html('😢')
+                            )
+                        ).append($('<td>').html(
+                            $('<td>').html(
+                                $('<button>', {class: 'btn btn-link memereact winner unclickable'}).html('😠')
+                            )
+                        ))
+                    ).append(
+                        $('<tr>', { class: 'react-count' }).html(
+                            $('<td>').html($('<p>').html(reacts.love))
                         ).append(
-                            $('<button>', {
-                              class: 'btn btn-link memereact winner unclickable badge'
-                            }).html('😠').attr('data-badge', reacts.angry)
+                            $('<td>').html($('<p>').html(reacts.funny))
+                        ).append(
+                            $('<td>').html($('<p>').html(reacts.shock))
+                        ).append(
+                            $('<td>').html($('<p>').html(reacts.sad))
+                        ).append(
+                            $('<td>').html($('<p>').html(reacts.angry))
                         )
                     )
+
                 ).append($('<div>', {class: 'winner'}).html(
                     $('<p>', {
                       class: 'name'

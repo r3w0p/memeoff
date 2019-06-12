@@ -84,17 +84,25 @@ textarea {
     font-size: 1.5em;
   }
 
+  .memecard .text {
+    font-size: 2.5em;
+  }
+
   .memereact-container td {
-    padding-top: 1em;
-    padding-bottom: 1em;
+    padding-top: 0.4em;
+    padding-bottom: 0.4em;
   }
 
   .memereact {
-    font-size: 3em;
+    font-size: 2.5em;
   }
 
   .memereact-container > .winner > .name {
     font-size: 2.5em;
+  }
+
+  .react-count p {
+    font-size: 1.5em;
   }
 }
 
@@ -141,17 +149,25 @@ textarea {
     font-size: 2em;
   }
 
+  .memecard .text {
+    font-size: 3.5em;
+  }
+
   .memereact-container td {
-    padding-top: 2em;
-    padding-bottom: 2em;
+    padding-top: 0.8em;
+    padding-bottom: 0.8em;
   }
 
   .memereact {
-    font-size: 5em;
+    font-size: 4.5em;
   }
 
   .memereact-container > .winner > .name {
     font-size: 3.5em;
+  }
+
+  .react-count p {
+    font-size: 2em;
   }
 }
 
@@ -198,17 +214,25 @@ textarea {
     font-size: 2.5em;
   }
 
+  .memecard .text {
+    font-size: 4em;
+  }
+
   .memereact-container td {
-    padding-top: 2.5em;
-    padding-bottom: 2.5em;
+    padding-top: 1.2em;
+    padding-bottom: 1.2em;
   }
 
   .memereact {
-    font-size: 7em;
+    font-size: 6.5em;
   }
 
   .memereact-container > .winner > .name {
     font-size: 4.5em;
+  }
+
+  .react-count p {
+    font-size: 2.5em;
   }
 }
 
@@ -255,17 +279,25 @@ textarea {
     font-size: 3em;
   }
 
+  .memecard .text {
+    font-size: 5em;
+  }
+
   .memereact-container td {
-    padding-top: 2.5em;
-    padding-bottom: 2.5em;
+    padding-top: 1.6em;
+    padding-bottom: 1.6em;
   }
 
   .memereact {
-    font-size: 7em;
+    font-size: 6.5em;
   }
 
   .memereact-container > .winner > .name {
     font-size: 5.5em;
+  }
+
+  .react-count p {
+    font-size: 3em;
   }
 }
 
@@ -418,4 +450,9 @@ textarea {
 .memereact.unclickable {
   pointer-events: none;
   cursor: default;
+}
+
+.react-count, .react-count td {
+  padding-top: 0;
+  padding-bottom: 0;
 }
