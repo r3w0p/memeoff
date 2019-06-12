@@ -161,7 +161,7 @@ let current_time = -1;
 let current_image = "";
 let sent_new_image = false;
 let attempting_download = false;
-let submissions = {};
+let submissions = [];
 let skip_count = 0;
 
 
@@ -217,7 +217,7 @@ const resetGame = (force) => {
     current_image = "";
     sent_new_image = false;
     attempting_download = false;
-    submissions = {};
+    submissions = [];
     skip_count = 0;
 
     stateTransition(START);
@@ -245,21 +245,39 @@ const handleStart = () => {
 };
 
 
-const handleSubmit = () => {
-  let num_submissions = Object.keys(submissions).length;
-  let num_users = usernames.size;
+const allOnlinePlayersHaveSubmitted = () => {
+  let arr_user = Array.from(usernames);
+  let arr_subs = Array.from(submissions);
 
-  if (num_users === num_submissions) {
-    // everybody has submitted
+  for (let i = 0; i < arr_user.length; i++) {
+    let userHasMadeSubmission = false;
+
+    for (let j = 0; j < arr_subs.length; j++) {
+      if (arr_user[i] === arr_subs[j].name) {
+        userHasMadeSubmission = true;
+        break;
+      }
+    }
+
+    if(!userHasMadeSubmission)
+      return false;
+  }
+
+  return true;
+};
+
+
+const handleSubmit = () => {
+  if (allOnlinePlayersHaveSubmitted()) {
     stateTransition(VOTE);
 
-  } else if (skip_count > (num_users / 2)) {
+  } else if (skip_count > (usernames.size / 2)) {
     // majority want to skip current image
     resetGame(true);
 
   } else if(current_time < 0) {
-    if (num_submissions < args.min_submit)
-      resetGame();
+    if (submissions.length < args.min_submit)
+      resetGame(true);
     else
       stateTransition(VOTE);
   }
@@ -397,7 +415,7 @@ io.on(CONNECTION, (socket) => {
   socket.on(USER_SUBMISSION, (data) => {
     if (!auth) return;
 
-    submissions[data.username] = data.text;
+    submissions.push({name: data.username, text: data.text});
     console.log(submissions);
 
     socket.emit(SUBMISSION_RECEIVED, {
@@ -406,7 +424,7 @@ io.on(CONNECTION, (socket) => {
     });
 
     io.to(ROOM_AUTH).emit(SUBMISSION_COUNT, {
-      submission_count: Object.keys(submissions).length
+      submission_count: submissions.length
     });
   });
 
