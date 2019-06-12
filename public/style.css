@@ -72,8 +72,21 @@ textarea {
     font-size: 1em;
   }
 
+  .memecard.submit .icon {
+    font-size: 1.5em;
+  }
+
   .submit-text {
     font-size: 1.5em;
+  }
+
+  .memereact-container td {
+    padding-top: 1em;
+    padding-bottom: 1em;
+  }
+
+  .memereact {
+    font-size: 3em;
   }
 }
 
@@ -108,8 +121,21 @@ textarea {
     font-size: 1.5em;
   }
 
+  .memecard.submit .icon {
+    font-size: 2.5em;
+  }
+
   .submit-text {
     font-size: 2em;
+  }
+
+  .memereact-container td {
+    padding-top: 2em;
+    padding-bottom: 2em;
+  }
+
+  .memereact {
+    font-size: 5em;
   }
 }
 
@@ -144,8 +170,21 @@ textarea {
     font-size: 2em;
   }
 
+  .memecard.submit .icon {
+    font-size: 3em;
+  }
+
   .submit-text {
     font-size: 2.5em;
+  }
+
+  .memereact-container td {
+    padding-top: 2.5em;
+    padding-bottom: 2.5em;
+  }
+
+  .memereact {
+    font-size: 7em;
   }
 }
 
@@ -180,8 +219,21 @@ textarea {
     font-size: 2.5em;
   }
 
+  .memecard.submit .icon {
+    font-size: 3.5em;
+  }
+
   .submit-text {
     font-size: 3em;
+  }
+
+  .memereact-container td {
+    padding-top: 2.5em;
+    padding-bottom: 2.5em;
+  }
+
+  .memereact {
+    font-size: 7em;
   }
 }
 
@@ -304,7 +356,7 @@ textarea {
   color: black;
 }
 
-.memereacts table {
+.memereact-container table {
   width: 100%;
   height: 100%;
   border-collapse: collapse;
@@ -312,16 +364,15 @@ textarea {
   text-align: center;
 }
 
-.memereacts-btn {
-  font-size: 200%;
+.memereact {
   text-align: center;
 }
 
-.memereacts-btn:hover {
+.memereact:hover {
   background-color: #eee;
 }
 
-.memereacts-btn.unclickable {
+.memereact.unclickable {
   pointer-events: none;
   cursor: default;
 }

@@ -22,17 +22,17 @@ Meme battling with friends.
 3) Go to `http://localhost:<port>`.
 
 
-| Argument          | Minimum       | Maximum       | Default          | Description                                       |
-|:------------------|:--------------|:--------------|:-----------------|:--------------------------------------------------|
-| `--port`          | 0             | 65535         | 3000             | The port.                                         |
-| `--min_players`   | 3             | 100           | 3                | Minimum number of players to start a game.        |
-| `--max_players`   | `min_players` | 100           | 10               | Maximum number of players.                        |
-| `--min_submit`    | 2             | `min_players` | 2                | Minimum number of submissions to start a vote.    |
-| `--dur_submit`    | 1             | 1800          | 60               | Seconds in which players can make submissions.    |
-| `--dur_vote`      | 1             | 1800          | 30               | Seconds in which players can vote.                |
-| `--dur_winner`    | 1             | 1800          | 15               | Seconds to show the winning meme(s).              |
-| `--img_width`     | 100           | 2000          | 400              | Width to resize image, in pixels.                 |
-| `--subreds`       |               |               | `subreddits.txt` | Path to list of subreddits.                       |
-| `--delim`         |               |               | `\n`             | Delimiter that separates subreddits in `subreds`. |
+|Argument       |Minimum      |Maximum      |Default         |Description                                      |
+|:--------------|:------------|:------------|:---------------|:------------------------------------------------|
+|`--port`       |0            |65535        |3000            |The port.                                        |
+|`--min_players`|3            |100          |3               |Minimum number of players to start a game.       |
+|`--max_players`|`min_players`|100          |10              |Maximum number of players.                       |
+|`--min_submit` |2            |`min_players`|2               |Minimum number of submissions to start a vote.   |
+|`--dur_submit` |1            |1800         |60              |Seconds in which players can make submissions.   |
+|`--dur_vote`   |1            |1800         |30              |Seconds in which players can vote.               |
+|`--dur_winner` |1            |1800         |15              |Seconds to show the winning meme(s).             |
+|`--img_width`  |100          |2000         |400             |Width to resize image, in pixels.                |
+|`--subreds`    |             |             |`subreddits.txt`|Path to list of subreddits.                      |
+|`--delim`      |             |             |`\n`            |Delimiter that separates subreddits in `subreds`.|
 
 
