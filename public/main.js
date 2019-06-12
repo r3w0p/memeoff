@@ -61,6 +61,9 @@ $(function() {
   let $gameSubmitImgContainer = $('#submit-image-container');
   let gameCurrentImage = "";
 
+  // Vote
+  let $gameVoteCardContainer = $('#vote-card-container');
+
   // Other
   let $window = $(window);
   let $inputCurrent = $loginUsernameInput.focus();
@@ -145,6 +148,7 @@ $(function() {
     // TODO reset all game variables
     resetNavbar();
     resetSubmit();
+    resetVote();
   };
 
 
@@ -171,6 +175,11 @@ $(function() {
     $gameSubmitImgContainer.html("");
     gameCurrentImage = "";
   };
+
+  const resetVote = () => {
+    // TODO
+    $gameVoteCardContainer.html("");
+  }
 
 
   // Sends a chat message
@@ -202,6 +211,73 @@ $(function() {
       $gameSubmitImgContainer.html("");
   };
 
+  const addVoteCard = (sub_id, title) => {
+    $gameVoteCardContainer.append(
+        $('<div>', {
+          class: 'column col-4 col-xl-12 memecard vote'
+        }).html(
+            $('<div>', {
+              class: 'card shadow'
+            }).html(
+                $('<div>', {
+                  class: 'card-header'
+                }).html(
+                    $('<div>', {
+                      class: 'card-title h3 text'
+                    }).html(title)
+                )
+            ).append(
+                $('<div>', {
+                  class: 'card-image image'
+                }).html(
+                    $('<img>',{
+                      class: 'img-responsive',
+                      src: gameCurrentImage,
+                      width: '100%'
+                    })
+                )
+            ).append(
+                $('<div>', {
+                  class: 'card-footer memereact-container'
+                }).html(
+                    $('<table>').html(
+                        $('<td>').html(
+                            $('<button>', {
+                              class: 'btn btn-link memereact'
+                            }).html('😍').attr('data-sub-id', sub_id).attr('data-react', 'love')
+                        ).append(
+                            $('<button>', {
+                              class: 'btn btn-link memereact'
+                            }).html('😆').attr('data-sub-id', sub_id).attr('data-react', 'funny')
+                        ).append(
+                            $('<button>', {
+                              class: 'btn btn-link memereact'
+                            }).html('😮').attr('data-sub-id', sub_id).attr('data-react', 'shock')
+                        ).append(
+                            $('<button>', {
+                              class: 'btn btn-link memereact'
+                            }).html('😢').attr('data-sub-id', sub_id).attr('data-react', 'sad')
+                        ).append(
+                            $('<button>', {
+                              class: 'btn btn-link memereact'
+                            }).html('😠').attr('data-sub-id', sub_id).attr('data-react', 'angry')
+                        )
+                    )
+                )
+            )
+        )
+    );
+  };
+
+
+  const appendSubmissions = (subs) => {
+    for(let i = 0; i < subs.length; i++) {
+      if(subs[i].name !== username)
+        addVoteCard(i, subs[i].text);
+    }
+  };
+
+
   const stateTransition = (name, time) => {
     if (gameCurrentState === name) return;
 
@@ -232,7 +308,7 @@ $(function() {
 
     // on ENTER key
     if (event.which === 13) {
-      if ($inputCurrent === $loginUsernameInput) {
+      if (!waitingForLoginResponse && $inputCurrent === $loginUsernameInput) {
         waitingForLoginResponse = true;
         $loginErrorMessage.html("Logging in...");
         sendLoginRequest();
@@ -264,52 +340,62 @@ $(function() {
   /* SOCKET EVENTS */
 
   socket.on(TRANSITION, (data) => {
-    if(auth) {
-      if (data.current_state in STATES) {
-        log('Transition: ' + data.current_state + '.');
+    if(!auth) return;
 
-        if (data.current_state === START)
-          resetGame();
+    if (data.current_state in STATES) {
+      log('Transition: ' + data.current_state + '.');
 
-        stateTransition(data.current_state, data.current_time);
-      }
+      if (data.current_state === START)
+        resetGame();
+
+      else if (data.current_state === VOTE)
+        appendSubmissions(data.bundle.submissions);
+
+      stateTransition(data.current_state, data.current_time);
     }
   });
 
   socket.on(NEW_IMAGE, (data) => {
-    if(auth) {
-      log("New image.");
-      setGameImage(data.image);
-    }
+    if(!auth) return;
+
+    log("New image.");
+    setGameImage(data.image);
   });
 
   socket.on(SUBMISSION_RECEIVED, (data) => {
-    if(auth) {
-      $gameSubmitInput.prop('disabled', true);
-      $gameSubmitInput.val(data.text);
-      $gameSubmitSend.addClass('disabled');
-      $gameSubmitSkip.addClass('disabled');
-    }
+    if(!auth) return;
+
+    $gameSubmitInput.prop('disabled', true);
+    $gameSubmitInput.val(data.text);
+    $gameSubmitSend.addClass('disabled');
+    $gameSubmitSkip.addClass('disabled');
   });
 
   socket.on(SUBMISSION_COUNT, (data) => {
-    if(auth)
-      $gameSubmitSend.attr('data-badge', data.submission_count);
+    if(!auth) return;
+
+    $gameSubmitSend.attr('data-badge', data.submission_count);
   });
 
   socket.on(SKIP_COUNT, (data) => {
-    if(auth)
-      $gameSubmitSkip.attr('data-badge', data.skip_count);
+    if(!auth) return;
+
+    $gameSubmitSkip.attr('data-badge', data.skip_count);
   });
 
   socket.on(LOGIN_SUCCESS, (data) => {
+    if(auth) return;
+
     username = data.username;
     auth = true;
     log('Login success.');
 
-    data.all_usernames.forEach(item => usernames.add(item));
-    setGameImage(data.current_image);
+    for(let i = 0; i < data.all_usernames.length; i++)
+      usernames.add(data.all_usernames[i]);
+
     refreshPlayerList();
+    setGameImage(data.current_image);
+    appendSubmissions(data.submissions);
 
     removeLoginPage();
     stateTransition(data.current_state, data.current_time);
@@ -317,6 +403,8 @@ $(function() {
   });
 
   socket.on(LOGIN_FAILURE, (data) => {
+    if(auth) return;
+
     log('Login failed.');
     $loginErrorMessage.html(data.message);
     waitingForLoginResponse = false;

@@ -269,7 +269,7 @@ const allOnlinePlayersHaveSubmitted = () => {
 
 const handleSubmit = () => {
   if (allOnlinePlayersHaveSubmitted()) {
-    stateTransition(VOTE);
+    stateTransition(VOTE, {submissions: submissions});
 
   } else if (skip_count > (usernames.size / 2)) {
     // majority want to skip current image
@@ -279,7 +279,7 @@ const handleSubmit = () => {
     if (submissions.length < args.min_submit)
       resetGame(true);
     else
-      stateTransition(VOTE);
+      stateTransition(VOTE, {submissions: submissions});
   }
 };
 
@@ -387,7 +387,8 @@ io.on(CONNECTION, (socket) => {
       all_usernames: Array.from(usernames),
       current_state: current_state,
       current_time: current_time,
-      current_image: current_image
+      current_image: current_image,
+      submissions: submissions
     });
 
     // notify players
