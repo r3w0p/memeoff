@@ -65,6 +65,9 @@ $(function() {
   // Vote
   let $gameVoteCardContainer = $('#vote-card-container');
 
+  // Winner
+  let $gameWinnerCardContainer = $('#winner-card-container');
+
   // Other
   let $window = $(window);
   let $inputCurrent = $loginUsernameInput.focus();
@@ -150,6 +153,7 @@ $(function() {
     resetNavbar();
     resetSubmit();
     resetVote();
+    resetWinner();
   };
 
 
@@ -180,7 +184,12 @@ $(function() {
   const resetVote = () => {
     // TODO
     $gameVoteCardContainer.html("");
-  }
+  };
+
+  const resetWinner = () => {
+    // TODO
+    $gameWinnerCardContainer.html("");
+  };
 
 
   // Sends a chat message
@@ -279,6 +288,75 @@ $(function() {
   };
 
 
+  const addWinnerCard = (name, title, reacts) => {
+    $gameWinnerCardContainer.append(
+        $('<div>', {
+          class: 'column col-4 col-xl-12 memecard winner'
+        }).html(
+            $('<div>', {
+              class: 'card shadow'
+            }).html(
+                $('<div>', {
+                  class: 'card-header'
+                }).html(
+                    $('<div>', {
+                      class: 'card-title h3 text'
+                    }).html(title)
+                )
+            ).append(
+                $('<div>', {
+                  class: 'card-image image'
+                }).html(
+                    $('<img>',{
+                      class: 'img-responsive',
+                      src: gameCurrentImage,
+                      width: '100%'
+                    })
+                )
+            ).append(
+                $('<div>', {
+                  class: 'card-footer memereact-container'
+                }).html(
+                    $('<table>').html(
+                        $('<td>').html(
+                            $('<button>', {
+                              class: 'btn btn-link memereact winner unclickable badge'
+                            }).html('😍').attr('data-badge', reacts.love)
+                        ).append(
+                            $('<button>', {
+                              class: 'btn btn-link memereact winner unclickable badge'
+                            }).html('😆').attr('data-badge', reacts.funny)
+                        ).append(
+                            $('<button>', {
+                              class: 'btn btn-link memereact winner unclickable badge'
+                            }).html('😮').attr('data-badge', reacts.shock)
+                        ).append(
+                            $('<button>', {
+                              class: 'btn btn-link memereact winner unclickable badge'
+                            }).html('😢').attr('data-badge', reacts.sad)
+                        ).append(
+                            $('<button>', {
+                              class: 'btn btn-link memereact winner unclickable badge'
+                            }).html('😠').attr('data-badge', reacts.angry)
+                        )
+                    )
+                ).append($('<div>', {class: 'winner'}).html(
+                    $('<p>', {
+                      class: 'name'
+                    }).html(name)
+                ))
+            )
+        )
+    );
+  };
+
+
+  const appendWinners = (winners) => {
+    for(let i = 0; i < winners.length; i++)
+      addWinnerCard(winners[i].name, winners[i].text, winners[i].reacts);
+  };
+
+
   const stateTransition = (name, time) => {
     if (gameCurrentState === name) return;
 
@@ -311,7 +389,7 @@ $(function() {
     if (event.which === 13) {
       if (!waitingForLoginResponse && $inputCurrent === $loginUsernameInput) {
         waitingForLoginResponse = true;
-        $loginErrorMessage.html("Logging in...");
+        $loginErrorMessage.html("Joining...");
         sendLoginRequest();
       }
     }
@@ -360,6 +438,9 @@ $(function() {
 
       else if (data.current_state === VOTE)
         appendSubmissions(data.bundle.submissions);
+
+      else if (data.current_state === WINNER)
+        appendWinners(data.bundle.winners);
 
       stateTransition(data.current_state, data.current_time);
     }
@@ -439,6 +520,7 @@ $(function() {
   socket.on(DISCONNECT, () => {
     log('Disconnected.');
     auth = false;
+    $loginErrorMessage.html("😵");
   });
 
   socket.on(RECONNECT, () => {
@@ -448,6 +530,7 @@ $(function() {
 
   socket.on(RECONNECT_ERROR, () => {
     log('Reconnect failed.');
+    $loginErrorMessage.html("😵");
   });
 
 });

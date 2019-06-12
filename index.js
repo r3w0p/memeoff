@@ -20,6 +20,7 @@ let args = minimist(process.argv.slice(2), {
     max_players: 10,
     min_submit: 2,
     dur_submit: 60,
+    min_vote: 1,
     dur_vote: 30,
     dur_winner: 15,
     img_width: 400,
@@ -82,6 +83,10 @@ validateArgument(args.min_submit < 2 || args.min_submit > args.min_players,
 // --dur_submit
 validateArgument(args.dur_submit < 1 || args.dur_submit > 1800,
     "Submit duration must be in the range 1 <= n <= 1800.");
+
+// --min_vote
+validateArgument(args.min_vote < 1 || args.min_vote > args.min_players,
+    "Minimum votes must be in the range 1 <= n <= min_players.");
 
 // --dur_vote
 validateArgument(args.dur_vote < 1 || args.dur_vote > 1800,
@@ -163,7 +168,7 @@ let current_image = "";
 let sent_new_image = false;
 let attempting_download = false;
 let submissions = [];
-let votes = [];
+let votes = []; // TODO maybe convert to list of voter usernames only?
 let skip_count = 0;
 
 
@@ -220,6 +225,7 @@ const resetGame = (force) => {
     sent_new_image = false;
     attempting_download = false;
     submissions = [];
+    votes = [];
     skip_count = 0;
 
     stateTransition(START);
@@ -252,16 +258,16 @@ const allOnlinePlayersHaveSubmitted = () => {
   let arr_subs = Array.from(submissions);
 
   for (let i = 0; i < arr_user.length; i++) {
-    let userHasMadeSubmission = false;
+    let userHasSubmitted = false;
 
     for (let j = 0; j < arr_subs.length; j++) {
       if (arr_user[i] === arr_subs[j].name) {
-        userHasMadeSubmission = true;
+        userHasSubmitted = true;
         break;
       }
     }
 
-    if(!userHasMadeSubmission)
+    if(!userHasSubmitted)
       return false;
   }
 
@@ -280,38 +286,73 @@ const handleSubmit = () => {
   } else if(current_time < 0) {
     if (submissions.length < args.min_submit)
       resetGame(true);
+
     else
       stateTransition(VOTE, {submissions: submissions});
   }
 };
 
 
-const handleVote = () => {
-  if(current_time < 0)
-    if(!areNoVotes())
-      stateTransition(WINNER);
-    else
-      resetGame();
-};
+const allOnlinePlayersHaveVoted = () => {
+  let arr_user = Array.from(usernames);
+  let arr_votes = Array.from(votes);
 
+  for (let i = 0; i < arr_user.length; i++) {
+    let userHasVoted = false;
 
-const getRandomItem = (items) => {
-  return items[Math.floor(Math.random() * items.length)];
-};
+    for (let j = 0; j < arr_votes.length; j++) {
+      if (arr_user[i] === arr_votes[j].voter) {
+        userHasVoted = true;
+        break;
+      }
+    }
 
-
-const isEmpty = (obj) => {
-  for(let key in obj)
-    if (obj.hasOwnProperty(key))
+    if(!userHasVoted)
       return false;
+  }
 
   return true;
 };
 
 
-const areNoVotes = () => {
-  // TODO
-  return false;
+const getWinners = () => {
+  let arr_subs = Array.from(submissions);
+  let highest_vote_count = 0;
+  let winners = [];
+
+  // get highest vote count
+  for (let i = 0; i < arr_subs.length; i++) {
+    if (highest_vote_count < arr_subs[i].votes)
+      highest_vote_count = arr_subs[i].votes;
+  }
+
+  // select all users with the highest vote count
+  for (let i = 0; i < arr_subs.length; i++) {
+    if (highest_vote_count === arr_subs[i].votes)
+      winners.push(arr_subs[i]);
+  }
+
+  console.log(winners);
+
+  return winners;
+};
+
+
+const handleVote = () => {
+  if (allOnlinePlayersHaveVoted()) {
+    stateTransition(WINNER, {winners: getWinners()});
+
+  } else if(current_time < 0) {
+    if (votes.length < args.min_vote)
+      resetGame(true);
+    else
+      stateTransition(WINNER, {winners: getWinners()});
+  }
+};
+
+
+const getRandomItem = (items) => {
+  return items[Math.floor(Math.random() * items.length)];
 };
 
 
@@ -418,7 +459,12 @@ io.on(CONNECTION, (socket) => {
   socket.on(USER_SUBMISSION, (data) => {
     if (!auth) return;
 
-    submissions.push({name: socket.username, text: data.text});
+    submissions.push({
+      name: socket.username,
+      text: data.text,
+      reacts: {love: 0, funny: 0, shock: 0, sad: 0, angry: 0},
+      votes: 0
+    });
     console.log(submissions);
 
     socket.emit(SUBMISSION_RECEIVED, {
@@ -444,8 +490,14 @@ io.on(CONNECTION, (socket) => {
   socket.on(USER_VOTE, (data) => {
     if (!auth) return;
 
-    votes.push({name: socket.username, id: data.id, react: data.react});
-    console.log(votes);
+    if (data.id < submissions.length) {
+      votes.push({voter: socket.username, id: data.id, react: data.react});
+      console.log(votes);
+
+      submissions[data.id].reacts[data.react] += 1;
+      submissions[data.id].votes += 1;
+
+    } else console.log("Invalid id " + data.id + " from " + socket.username + " (max: " + submissions.length + ").")
   });
 
 });

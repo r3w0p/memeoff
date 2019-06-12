@@ -43,8 +43,12 @@ textarea {
 
 /* Extra small devices (phones, 600px and down) */
 @media only screen and (max-width: 600px) {
-  .badge[data-badge]:after {
+  .submit.badge[data-badge]:after {
     font-size: 1.2em;
+  }
+
+  .winner.badge[data-badge]:after {
+    font-size: 0.4em;
   }
 
   .login-text {
@@ -88,12 +92,20 @@ textarea {
   .memereact {
     font-size: 3em;
   }
+
+  .memereact-container > .winner > .name {
+    font-size: 2.5em;
+  }
 }
 
 /* Small devices (portrait tablets and large phones, 600px and up) */
 @media only screen and (min-width: 600px) {
-  .badge[data-badge]:after {
+  .submit.badge[data-badge]:after {
     font-size: 1.5em;
+  }
+
+  .winner.badge[data-badge]:after {
+    font-size: 0.4em;
   }
 
   .login-text {
@@ -137,12 +149,20 @@ textarea {
   .memereact {
     font-size: 5em;
   }
+
+  .memereact-container > .winner > .name {
+    font-size: 3.5em;
+  }
 }
 
 /* Medium devices (landscape tablets, 768px and up) */
 @media only screen and (min-width: 768px) {
-  .badge[data-badge]:after {
+  .submit.badge[data-badge]:after {
     font-size: 2em;
+  }
+
+  .winner.badge[data-badge]:after {
+    font-size: 0.5em;
   }
 
   .login-text {
@@ -186,12 +206,20 @@ textarea {
   .memereact {
     font-size: 7em;
   }
+
+  .memereact-container > .winner > .name {
+    font-size: 4.5em;
+  }
 }
 
 /* Large devices (laptops/desktops, 992px and up) */
 @media only screen and (min-width: 992px) {
-  .badge[data-badge]:after {
+  .submit.badge[data-badge]:after {
     font-size: 2.5em;
+  }
+
+  .winner.badge[data-badge]:after {
+    font-size: 0.6em;
   }
 
   .login-text {
@@ -234,6 +262,10 @@ textarea {
 
   .memereact {
     font-size: 7em;
+  }
+
+  .memereact-container > .winner > .name {
+    font-size: 5.5em;
   }
 }
 
@@ -362,6 +394,17 @@ textarea {
   border-collapse: collapse;
   border-spacing: 0;
   text-align: center;
+}
+
+.memereact-container > .winner {
+  width: 100%;
+  display: table;
+}
+
+.memereact-container > .winner > .name {
+  display: table-cell;
+  text-align: center;
+  font-weight: bold;
 }
 
 .memereact {
