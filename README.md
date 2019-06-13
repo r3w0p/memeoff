@@ -1,11 +1,19 @@
 ![memeoff](https://raw.githubusercontent.com/r3w0p/memeoff/master/public/img/logo/400.png)
 
-![Players: 3+](https://img.shields.io/badge/players-3+-red.svg)
-![License](https://img.shields.io/github/license/r3w0p/memeoff.svg)
-![Version](https://img.shields.io/github/package-json/v/r3w0p/memeoff.svg)
-![Last Commit](https://img.shields.io/github/last-commit/r3w0p/memeoff.svg)
-[<img src="https://img.shields.io/badge/donate-buy%20me%20a%20coffee-orange.svg">](https://www.buymeacoffee.com/r3w0p)
-[<img src="https://img.shields.io/badge/donate-PayPal-blue.svg">](https://www.paypal.me/apowpow)
+
+<a href="javascript:;" alt="Players">
+   <img src="https://img.shields.io/badge/players-3+-red.svg"/></a>
+<a href="javascript:;" alt="Version">
+   <img src="https://img.shields.io/github/package-json/v/r3w0p/memeoff.svg"/></a>
+<a href="https://github.com/r3w0p/memeoff/blob/master/LICENSE" alt="License">
+   <img src="https://img.shields.io/github/license/r3w0p/memeoff.svg"/></a>
+<a href="https://github.com/r3w0p/memeoff/graphs/commit-activity" alt="Last Commit">
+   <img src="https://img.shields.io/github/last-commit/r3w0p/memeoff.svg"/></a>
+<a href="https://www.buymeacoffee.com/r3w0p" alt="Buy Me A Coffee">
+   <img src="https://img.shields.io/badge/donate-buy%20me%20a%20coffee-orange.svg"/></a>
+<a href="https://www.paypal.me/apowpow" alt="PayPal">
+   <img src="https://img.shields.io/badge/donate-PayPal-blue.svg"/></a>
+
 
 Meme battling with friends.
 
