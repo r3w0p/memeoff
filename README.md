@@ -1,6 +1,9 @@
-# memeoff
+![memeoff](https://raw.githubusercontent.com/r3w0p/memeoff/master/public/img/logo/400.png)
 
-![3 or more players](https://img.shields.io/badge/players-3%20or%20more-red.svg)
+![Players: 3+](https://img.shields.io/badge/players-3+-red.svg)
+![License](https://img.shields.io/github/license/r3w0p/memeoff.svg)
+![Version](https://img.shields.io/github/package-json/v/r3w0p/memeoff.svg)
+![Last Commit](https://img.shields.io/github/last-commit/r3w0p/memeoff.svg)
 [<img src="https://img.shields.io/badge/donate-buy%20me%20a%20coffee-orange.svg">](https://www.buymeacoffee.com/r3w0p)
 [<img src="https://img.shields.io/badge/donate-PayPal-blue.svg">](https://www.paypal.me/apowpow)
 
