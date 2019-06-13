@@ -41,8 +41,17 @@ textarea {
 
 /* Mobile First */
 
-/* Extra small devices (phones, 600px and down) */
+/* Extra small devices (phones, 600px and down, col-sm) */
 @media only screen and (max-width: 600px) {
+  #game-area {
+    z-index: 2;
+    position: relative;
+    width: 100%;
+    margin-top: 2%;
+    padding-left: 5%;
+    padding-right: 5%;
+  }
+
   .submit.badge[data-badge]:after {
     font-size: 1.2em;
   }
@@ -106,7 +115,7 @@ textarea {
   }
 }
 
-/* Small devices (portrait tablets and large phones, 600px and up) */
+/* Small devices (portrait tablets and large phones, col-md) */
 @media only screen and (min-width: 600px) {
   .submit.badge[data-badge]:after {
     font-size: 1.5em;
@@ -171,8 +180,8 @@ textarea {
   }
 }
 
-/* Medium devices (landscape tablets, 768px and up) */
-@media only screen and (min-width: 768px) {
+/* Medium devices (landscape tablets, col-lg) */
+@media only screen and (min-width: 840px) {
   .submit.badge[data-badge]:after {
     font-size: 2em;
   }
@@ -236,10 +245,10 @@ textarea {
   }
 }
 
-/* Large devices (laptops/desktops, 992px and up) */
-@media only screen and (min-width: 992px) {
+/* Large devices (laptops/desktops, col-xl) */
+@media only screen and (min-width: 960px) {
   .submit.badge[data-badge]:after {
-    font-size: 2.5em;
+    font-size: 1.2em;
   }
 
   .winner.badge[data-badge]:after {
@@ -247,59 +256,87 @@ textarea {
   }
 
   .login-text {
-    font-size: 2em;
+    font-size: 3em;
   }
 
   #game-navbar {
-    padding: 2.5% 2% 2.5% 2%;
+    padding: 0.75% 2% 0.75% 2%;
   }
 
   .nav-text {
-    font-size: 4.8em;
+    font-size: 2em;
     color: purple;
   }
 
   #game-navbar > .logo img {
-    height: 6em;
+    height: 2.5em;
   }
 
   .hero .emoji {
-    font-size: 4em;
+    font-size: 3em;
   }
 
   .hero .message {
-    font-size: 2.5em;
+    font-size: 1.5em;
   }
 
   .memecard.submit .icon {
-    font-size: 3.5em;
+    font-size: 1.5em;
   }
 
   .submit-text {
-    font-size: 3em;
+    font-size: 1.5em;
   }
 
   .memecard .text {
-    font-size: 5em;
+    font-size: 2.8em;
   }
 
   .memereact-container td {
-    padding-top: 1.6em;
-    padding-bottom: 1.6em;
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
   }
 
   .memereact {
-    font-size: 6.5em;
+    font-size: 3em;
   }
 
   .memereact-container > .winner > .name {
-    font-size: 5.5em;
+    font-size: 2em;
   }
 
   .react-count p {
-    font-size: 3em;
+    font-size: 2em;
   }
 }
+
+
+/* Extra large devices (large laptops and desktops, col) */
+@media only screen and (min-width: 1280px) {
+  .nav-text {
+    font-size: 2em;
+    color: orange;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -23,7 +23,8 @@ let args = minimist(process.argv.slice(2), {
     min_vote: 1,
     dur_vote: 30,
     dur_winner: 15,
-    img_width: 400,
+    max_width: 400,
+    max_height: 300,
     subreds: 'subreddits.txt',
     delim: '\n'
   },
@@ -96,9 +97,13 @@ validateArgument(args.dur_vote < 1 || args.dur_vote > 1800,
 validateArgument(args.dur_winner < 1 || args.dur_winner > 1800,
     "Winner duration must be in the range 1 <= n <= 1800.");
 
-// --img_width
-validateArgument(args.img_width < 100 || args.img_width > 2000,
-    "Image width must be in the range 100 <= n <= 2000.");
+// --max_width
+validateArgument(args.max_width < 100 || args.max_width > 2000,
+    "Maximum image width must be in the range 100 <= n <= 2000.");
+
+// --max_height
+validateArgument(args.max_height < 100 || args.max_height > 2000,
+    "Maximum image height must be in the range 100 <= n <= 2000.");
 
 // --subreds
 validateArgument(!args.subreds,
@@ -373,9 +378,11 @@ const getNewImage = () => {
           // modify image
           Jimp.read(new Buffer(body))
               .then(img => {
+                let width = Math.min(args.max_width, img.bitmap.width);
+                let height = Math.min(args.max_height, img.bitmap.height);
 
                 // resize image and convert to base64
-                img.resize(args.img_width, Jimp.AUTO).getBase64(Jimp.AUTO, function(e, img64) {
+                img.resize(width, height).getBase64(Jimp.AUTO, function(e, img64) {
                   if(!e)
                     current_image = img64; // store base64 image
 
