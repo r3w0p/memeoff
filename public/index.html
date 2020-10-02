@@ -35,56 +35,42 @@
   <body class="bg-light">
 
     <!-- NAV BAR -->
-    <nav class="navbar navbar-expand-lg fixed-top navbar-dark bg-dark">
-      <a class="navbar-brand mr-auto mr-lg-0" href="#">memeoff</a>
-      <button class="navbar-toggler p-0 border-0" type="button" data-toggle="offcanvas">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-
-      <div class="navbar-collapse offcanvas-collapse" id="navbarsExampleDefault">
-        <ul class="navbar-nav mr-auto">
-          <li class="nav-item active">
-            <a class="nav-link" href="#">Dashboard <span class="sr-only">(current)</span></a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#">Notifications</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#">Profile</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#">Switch account</a>
-          </li>
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="dropdown01" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Settings</a>
-            <div class="dropdown-menu" aria-labelledby="dropdown01">
-              <a class="dropdown-item" href="#">Action</a>
-              <a class="dropdown-item" href="#">Another action</a>
-              <a class="dropdown-item" href="#">Something else here</a>
-            </div>
-          </li>
-        </ul>
-      </div>
+    <nav class="navbar fixed-top navbar-light bg-light shadow-sm">
+      <a class="navbar-brand" href="https://github.com/r3w0p/memeoff" target="_blank">
+        <img src="img/icon/50.png" alt="memeoff" style="width: 1.5em; height: 1.5em;">
+      </a>
+      <ul class="nav justify-content-end">
+        <li class="nav-item">
+          <button type="button" class="btn btn-outline-primary">
+            <span class="badge badge-primary">9</span>
+            <svg width="1.4em" height="1.4em" viewBox="0 0 16 16" class="bi bi-person-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path fill-rule="evenodd" d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path>
+            </svg>
+          </button>
+        </li>
+      </ul>
     </nav>
 
     <!-- MAIN -->
     <main role="main" class="container main">
-      <div class="d-flex align-items-center p-2 my-3 text-white-50 bg-purple rounded shadow-sm">
-        <!--<img class="mr-3" src="img/icon/150.png" alt="m" width="48" height="48">-->
+      <!-- Game State -->
+      <div class="d-flex align-items-center p-2 my-3 rounded shadow-sm" style="background-color: #007bff;">
         <div class="mr-2" style="background-color: transparent; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
-          <span style="font-weight: bold;">30</span>
+          <span class="text-white" style="font-weight: bold;">30</span>
         </div>
         <div class="lh-100">
-          <h6 class="mb-0 text-white lh-100">Game state</h6>
-          <small>Description of what to do next</small>
+          <h6 class="mb-0 text-white lh-100">user123 won with 5 votes</h6>
+          <small class="text-white" style="opacity: 0.8;">Starting next round...</small>
         </div>
       </div>
 
-      <div class="my-3 p-3 bg-white rounded shadow-sm">
-        <h2 class="border-bottom border-gray pb-2 mb-0 meme-font" style="display: none;">when bruh momento</h2>
-        <img class="mr-3" src="img/bruh.png" style="width: 100%">
+      <!-- Meme -->
+      <div class="p-3 bg-white rounded shadow-sm">
+        <span class="meme-font" style="font-size: 2em; display: none">when bruh momento</span>
+        <img src="img/bruh.png" style="width: 100%">
       </div>
 
+      <!-- Caption -->
       <div class="my-3 p-3 bg-white rounded shadow-sm">
         <div class="input-group mb-3">
           <textarea class="form-control meme-font caption" disabled aria-label="With textarea" placeholder="Enter caption..."></textarea>
@@ -95,43 +81,23 @@
         </div>
       </div>
 
+      <!-- Submissions -->
       <div class="my-3 p-3 bg-white rounded shadow-sm">
         <h6 class="border-bottom border-gray pb-2 mb-0">Submissions</h6>
-        <div class="media text-muted pt-3">
-          <svg class="bd-placeholder-img mr-2 rounded" width="32" height="32" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: 32x32"><title>Placeholder</title><rect width="100%" height="100%" fill="#007bff"/><text x="50%" y="50%" fill="#007bff" dy=".3em">32x32</text></svg>
-          <div class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray">
-            <div class="d-flex justify-content-between align-items-center w-100">
-              <strong class="text-gray-dark">Full Name</strong>
-              <a href="#">Follow</a>
-            </div>
-            <span class="d-block">@username</span>
-          </div>
-        </div>
-        <div class="media text-muted pt-3">
-          <svg class="bd-placeholder-img mr-2 rounded" width="32" height="32" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: 32x32"><title>Placeholder</title><rect width="100%" height="100%" fill="#007bff"/><text x="50%" y="50%" fill="#007bff" dy=".3em">32x32</text></svg>
-          <div class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray">
-            <div class="d-flex justify-content-between align-items-center w-100">
-              <strong class="text-gray-dark">Full Name</strong>
-              <a href="#">Follow</a>
-            </div>
-            <span class="d-block">@username</span>
-          </div>
-        </div>
-        <div class="media text-muted pt-3">
-          <svg class="bd-placeholder-img mr-2 rounded" width="32" height="32" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: 32x32"><title>Placeholder</title><rect width="100%" height="100%" fill="#007bff"/><text x="50%" y="50%" fill="#007bff" dy=".3em">32x32</text></svg>
-          <div class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray">
-            <div class="d-flex justify-content-between align-items-center w-100">
-              <strong class="text-gray-dark">Full Name</strong>
-              <a href="#">Follow</a>
-            </div>
-            <span class="d-block">@username</span>
-          </div>
-        </div>
-        <small class="d-block text-right mt-3">
-          <a href="#">All suggestions</a>
-        </small>
-      </div>
-    </main>
 
+        <div class="media text-muted border-bottom border-gray">
+          <ul class="list-group list-group-horizontal" style="min-width: 100%;">
+            <li class="list-group-item meme-font text-middle flex-fill" style="border: 0 none;">
+              <span class="text-black meme-font" style="font-size: 1em;">when bruh momento</span>
+            </li>
+            <li class="list-group-item align-center-middle" style="border: 0 none">
+              <button type="button" class="btn btn-outline-primary">5</button>
+            </li>
+          </ul>
+        </div>
+
+      </div>
+
+    </main>
   </body>
 </html>

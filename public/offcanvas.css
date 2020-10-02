@@ -96,3 +96,14 @@ body {
 .form-control.caption{
   background-color: #F8F8F8 !important;
 }
+
+.align-center-middle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.text-middle {
+  display: flex;
+  align-items: center;
+}
