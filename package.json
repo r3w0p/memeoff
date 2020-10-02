@@ -1,12 +1,13 @@
 {
   "name": "memeoff",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "author": "r3w0p",
   "description": "Meme battling with friends.",
   "main": "index.js",
   "keywords": [],
   "license": "MIT",
   "dependencies": {
+    "bootstrap": "4.5.2",
     "express": "4.13.4",
     "jimp": "0.6.4",
     "minimist": "1.2.5",

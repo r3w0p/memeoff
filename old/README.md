@@ -32,9 +32,10 @@ Meme battling with friends.
 
 ## Setup
 
-1) Install packages using `npm install`.
-2) Run `npm start` for default configuration, or `node index.js` to specify arguments (below).
-3) Go to `http://localhost:<port>`.
+1) Install `node` (tested on version `14.12.0`)
+2) Install packages using `npm install`.
+3) Run `npm start` for default configuration, or `node index.js` to specify arguments (below).
+4) Go to `http://localhost:<port>`.
 
 
 ### Arguments
@@ -45,13 +46,13 @@ Meme battling with friends.
 |`--min_players`  |3            |100          |3               |Minimum number of players to start a game.       |
 |`--max_players`  |`min_players`|100          |10              |Maximum number of players.                       |
 |`--min_submit`   |2            |`min_players`|2               |Minimum number of submissions to start a vote.   |
-|`--dur_submit`   |1            |1800         |60              |Seconds in which players can make submissions.   |
+|`--dur_submit`   |1            |1800         |30              |Seconds in which players can make submissions.   |
 |`--min_vote`     |1            |`min_players`|1               |Minimum number of votes that need to be cast.    |
 |`--dur_vote`     |1            |1800         |30              |Seconds in which players can vote.               |
-|`--dur_winner`   |1            |1800         |15              |Seconds to show the winning meme(s).             |
+|`--dur_winner`   |1            |1800         |10              |Seconds to show the winning meme(s).             |
 |`--max_width`    |100          |2000         |400             |Maximum width of image, in pixels.               |
 |`--max_height`   |100          |2000         |300             |Maximum height of image, in pixels.              |
-|`--subreds`      |             |             |`subreddits.txt`|Path to list of subreddits.                      |
-|`--delim`        |             |             |`\n`            |Delimiter that separates subreddits in `subreds`.|
+|`--subreddits`   |             |             |`subreddits.txt`|Path to list of subreddits.                      |
+|`--delimiter`    |             |             |`\n`            |Delimiter that separates subreddits in `subreds`.|
 
 

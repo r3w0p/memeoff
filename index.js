@@ -14,53 +14,53 @@ const io = require('socket.io')(server);
 
 
 let args = minimist(process.argv.slice(2), {
-  default: {
-    port: 3000,
-    min_players: 3,
-    max_players: 10,
-    min_submit: 2,
-    dur_submit: 60,
-    min_vote: 1,
-    dur_vote: 30,
-    dur_winner: 15,
-    max_width: 400,
-    max_height: 300,
-    subreds: 'subreddits.txt',
-    delim: '\n'
-  },
+    default: {
+        port: 3000,
+        min_players: 3,
+        max_players: 10,
+        min_submit: 2,
+        dur_submit: 30,
+        min_vote: 1,
+        dur_vote: 30,
+        dur_winner: 10,
+        max_width: 400,
+        max_height: 300,
+        subreddits: 'subreddits.txt',
+        delimiter: '\n'
+    },
 });
 
 const validateArgument = (invalidCondition, messageOnTrue) => {
-  if (invalidCondition) {
-    console.error(messageOnTrue);
-    process.exit(1);
-  }
+    if (invalidCondition) {
+        console.error(messageOnTrue);
+        process.exit(1);
+    }
 };
 
-const getSubreddits = (file_subred, delim) => {
-  let subred;
+const getSubreddits = (file_subred, delimiter) => {
+    let subred;
 
-  try {
-    subred = fs.readFileSync(file_subred, 'utf8')
-        .split(delim)
-        .map(function(item) {
-          return item.trim();
-        })
-        .filter(function (item) {
-          return item;
-        });
+    try {
+        subred = fs.readFileSync(file_subred, 'utf8')
+            .split(delimiter)
+            .map(function(item) {
+                return item.trim();
+            })
+            .filter(function (item) {
+                return item;
+            });
 
-  } catch (err) {
-    console.error("Failed to get subreddits from '" + args.subreds + "': " + err.message);
-    process.exit(1);
-  }
+    } catch (err) {
+        console.error("Failed to get subreddits from '" + args.subreddits + "': " + err.message);
+        process.exit(1);
+    }
 
-  if (!subred || subred.length === 0) {
-    console.error("No subreddits found in '" + args.subreds + "'.");
-    process.exit(1);
-  }
+    if (!subred || subred.length === 0) {
+        console.error("No subreddits found in '" + args.subreddits + "'.");
+        process.exit(1);
+    }
 
-  return subred;
+    return subred;
 };
 
 
@@ -105,12 +105,12 @@ validateArgument(args.max_width < 100 || args.max_width > 2000,
 validateArgument(args.max_height < 100 || args.max_height > 2000,
     "Maximum image height must be in the range 100 <= n <= 2000.");
 
-// --subreds
-validateArgument(!args.subreds,
+// --subreddits
+validateArgument(!args.subreddits,
     "A subreddit file must be specified.");
 
-// --delim
-validateArgument(!args.delim,
+// --delimiter
+validateArgument(!args.delimiter,
     "A subreddit file delimiter must be specified.");
 
 
@@ -118,7 +118,7 @@ validateArgument(!args.delim,
 /* SERVER SETUP */
 
 server.listen(args.port, () => {
-  console.log('Server listening at port %d', args.port);
+    console.log('Server listening at port %d', args.port);
 });
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -153,18 +153,18 @@ const VOTE    = "VOTE";
 const WINNER  = "WINNER";
 
 const STATES = {
-  PLAYERS: {"time": -1},
-  START:   {"time": 5},
-  SUBMIT:  {"time": args.dur_submit},
-  VOTE:    {"time": args.dur_vote},
-  WINNER:  {"time": args.dur_winner}
+    PLAYERS: {"time": -1},
+    START:   {"time": 5},
+    SUBMIT:  {"time": args.dur_submit},
+    VOTE:    {"time": args.dur_vote},
+    WINNER:  {"time": args.dur_winner}
 };
 
 
 
 
 /* VARIABLES */
-let subreddits = getSubreddits(args.subreds, args.delim);
+let subreddits = getSubreddits(args.subreddits, args.delimiter);
 let usernames = new Set();
 let current_state = "";
 let current_time = -1;
@@ -178,334 +178,332 @@ let skip_count = 0;
 
 
 setInterval(() => {
-  if(current_time >= 0)
-    current_time -= 1;
+    if(current_time >= 0)
+        current_time -= 1;
 
-  // Not enough players
-  if (usernames.size < args.min_players) {
-    waitForMorePlayers();
+    // Not enough players
+    if (usernames.size < args.min_players) {
+        waitForMorePlayers();
 
-  } else {
-    if(current_state === PLAYERS) {
-      resetGame();
+    } else {
+        if(current_state === PLAYERS) {
+            resetGame();
 
-    } else if(current_state === START) {
-      handleStart();
+        } else if(current_state === START) {
+            handleStart();
 
-    } else if(current_state === SUBMIT) {
-      handleSubmit();
+        } else if(current_state === SUBMIT) {
+            handleSubmit();
 
-    } else if(current_state === VOTE) {
-      handleVote();
+        } else if(current_state === VOTE) {
+            handleVote();
 
-    } else if(current_state === WINNER) {
-      resetGame();
+        } else if(current_state === WINNER) {
+            resetGame();
+        }
     }
-  }
 }, 1000);
 
 
 const stateTransition = (state_name, bundle) => {
-  current_state = state_name;
-  current_time = STATES[current_state].time;
+    current_state = state_name;
+    current_time = STATES[current_state].time;
 
-  io.emit(TRANSITION, {
-    current_state: current_state,
-    current_time: current_time,
-    bundle: bundle || {}
-  });
+    io.emit(TRANSITION, {
+        current_state: current_state,
+        current_time: current_time,
+        bundle: bundle || {}
+    });
 };
 
 
 const waitForMorePlayers = () => {
-  if (current_state !== PLAYERS)
-    stateTransition(PLAYERS);
+    if (current_state !== PLAYERS)
+        stateTransition(PLAYERS);
 };
 
 
 const resetGame = (force) => {
-  if(force || current_time < 0) {
-    // TODO reset all game variables
-    current_image = "";
-    sent_new_image = false;
-    attempting_download = false;
-    submissions = [];
-    votes = [];
-    skip_count = 0;
+    if(force || current_time < 0) {
+        // TODO reset all game variables
+        current_image = "";
+        sent_new_image = false;
+        attempting_download = false;
+        submissions = [];
+        votes = [];
+        skip_count = 0;
 
-    stateTransition(START);
-  }
+        stateTransition(START);
+    }
 };
 
 
 const handleStart = () => {
-  if (!current_image) {
-    // keep trying to get a new image
-    getNewImage();
+    if (!current_image) {
+        // keep trying to get a new image
+        getNewImage();
 
-  } else if (!sent_new_image) {
-    // send new image
-    io.emit(NEW_IMAGE, {
-      image: current_image
-    });
+    } else if (!sent_new_image) {
+        // send new image
+        io.emit(NEW_IMAGE, {
+            image: current_image
+        });
 
-    sent_new_image = true;
-  }
+        sent_new_image = true;
+    }
 
-  // transition when new image sent and timer elapse
-  if(sent_new_image && current_time < 0)
-    stateTransition(SUBMIT);
+    // transition when new image sent and timer elapse
+    if(sent_new_image && current_time < 0)
+        stateTransition(SUBMIT);
 };
 
 
 const allOnlinePlayersHaveSubmitted = () => {
-  let arr_user = Array.from(usernames);
-  let arr_subs = Array.from(submissions);
+    let arr_user = Array.from(usernames);
+    let arr_subs = Array.from(submissions);
 
-  for (let i = 0; i < arr_user.length; i++) {
-    let userHasSubmitted = false;
+    for (let i = 0; i < arr_user.length; i++) {
+        let userHasSubmitted = false;
 
-    for (let j = 0; j < arr_subs.length; j++) {
-      if (arr_user[i] === arr_subs[j].name) {
-        userHasSubmitted = true;
-        break;
-      }
+        for (let j = 0; j < arr_subs.length; j++) {
+            if (arr_user[i] === arr_subs[j].name) {
+                userHasSubmitted = true;
+                break;
+            }
+        }
+
+        if(!userHasSubmitted)
+            return false;
     }
 
-    if(!userHasSubmitted)
-      return false;
-  }
-
-  return true;
+    return true;
 };
 
 
 const handleSubmit = () => {
-  if (allOnlinePlayersHaveSubmitted()) {
-    stateTransition(VOTE, {submissions: submissions});
+    if (allOnlinePlayersHaveSubmitted()) {
+        stateTransition(VOTE, {submissions: submissions});
 
-  } else if (skip_count > (usernames.size / 2)) {
-    // majority want to skip current image
-    resetGame(true);
+    } else if (skip_count > (usernames.size / 2)) {
+        // majority want to skip current image
+        resetGame(true);
 
-  } else if(current_time < 0) {
-    if (submissions.length < args.min_submit)
-      resetGame(true);
+    } else if(current_time < 0) {
+        if (submissions.length < args.min_submit)
+            resetGame(true);
 
-    else
-      stateTransition(VOTE, {submissions: submissions});
-  }
+        else
+            stateTransition(VOTE, {submissions: submissions});
+    }
 };
 
 
 const allOnlinePlayersHaveVoted = () => {
-  let arr_user = Array.from(usernames);
-  let arr_votes = Array.from(votes);
+    let arr_user = Array.from(usernames);
+    let arr_votes = Array.from(votes);
 
-  for (let i = 0; i < arr_user.length; i++) {
-    let userHasVoted = false;
+    for (let i = 0; i < arr_user.length; i++) {
+        let userHasVoted = false;
 
-    for (let j = 0; j < arr_votes.length; j++) {
-      if (arr_user[i] === arr_votes[j].voter) {
-        userHasVoted = true;
-        break;
-      }
+        for (let j = 0; j < arr_votes.length; j++) {
+            if (arr_user[i] === arr_votes[j].voter) {
+                userHasVoted = true;
+                break;
+            }
+        }
+
+        if(!userHasVoted)
+            return false;
     }
 
-    if(!userHasVoted)
-      return false;
-  }
-
-  return true;
+    return true;
 };
 
 
 const getWinners = () => {
-  let arr_subs = Array.from(submissions);
-  let highest_vote_count = 0;
-  let winners = [];
+    let arr_subs = Array.from(submissions);
+    let highest_vote_count = 0;
+    let winners = [];
 
-  // get highest vote count
-  for (let i = 0; i < arr_subs.length; i++) {
-    if (highest_vote_count < arr_subs[i].votes)
-      highest_vote_count = arr_subs[i].votes;
-  }
+    // get highest vote count
+    for (let i = 0; i < arr_subs.length; i++) {
+        if (highest_vote_count < arr_subs[i].votes)
+            highest_vote_count = arr_subs[i].votes;
+    }
 
-  // select all users with the highest vote count
-  for (let i = 0; i < arr_subs.length; i++) {
-    if (highest_vote_count === arr_subs[i].votes)
-      winners.push(arr_subs[i]);
-  }
+    // select all users with the highest vote count
+    for (let i = 0; i < arr_subs.length; i++) {
+        if (highest_vote_count === arr_subs[i].votes)
+            winners.push(arr_subs[i]);
+    }
 
-  console.log(winners);
+    console.log(winners);
 
-  return winners;
+    return winners;
 };
 
 
 const handleVote = () => {
-  if (allOnlinePlayersHaveVoted()) {
-    stateTransition(WINNER, {winners: getWinners()});
+    if (allOnlinePlayersHaveVoted()) {
+        stateTransition(WINNER, {winners: getWinners()});
 
-  } else if(current_time < 0) {
-    if (votes.length < args.min_vote)
-      resetGame(true);
-    else
-      stateTransition(WINNER, {winners: getWinners()});
-  }
+    } else if(current_time < 0) {
+        if (votes.length < args.min_vote)
+            resetGame(true);
+        else
+            stateTransition(WINNER, {winners: getWinners()});
+    }
 };
 
 
 const getRandomItem = (items) => {
-  return items[Math.floor(Math.random() * items.length)];
+    return items[Math.floor(Math.random() * items.length)];
 };
 
 
 const getNewImage = () => {
-  // try to download new image if not already doing so
-  // and one hasn't already been downloaded
-  if(!attempting_download && !current_image) {
-    attempting_download = true;
+    // try to download new image if not already doing so
+    // and one hasn't already been downloaded
+    if(!attempting_download && !current_image) {
+        attempting_download = true;
 
-    // get random image url from random subreddit
-    randomPuppy(getRandomItem(subreddits))
-        .then(imageURL => {
+        // get random image url from random subreddit
+        randomPuppy(getRandomItem(subreddits))
+            .then(imageURL => {
 
-      // download the image
-      request.get(imageURL, function (error, response, body) {
-        if (!error && response.statusCode === 200) {
+                // download the image
+                request.get(imageURL, function (error, response, body) {
+                    if (!error && response.statusCode === 200) {
 
-          // modify image
-          Jimp.read(new Buffer(body))
-              .then(img => {
-                let width = Math.min(args.max_width, img.bitmap.width);
-                let height = Math.min(args.max_height, img.bitmap.height);
+                        // modify image
+                        Jimp.read(new Buffer(body))
+                            .then(img => {
+                                let width = Math.min(args.max_width, img.bitmap.width);
+                                let height = Math.min(args.max_height, img.bitmap.height);
 
-                // resize image and convert to base64
-                img.resize(width, height).getBase64(Jimp.AUTO, function(e, img64) {
-                  if(!e)
-                    current_image = img64; // store base64 image
+                                // resize image and convert to base64
+                                img.resize(width, height).getBase64(Jimp.AUTO, function(e, img64) {
+                                    if(!e)
+                                        current_image = img64; // store base64 image
 
-                  attempting_download = false;
+                                    attempting_download = false;
+                                });
+
+                            }).catch(err => { attempting_download = false; }); // jimp read
+
+                    } else attempting_download = false; // request error
                 });
 
-              }).catch(err => { attempting_download = false; }); // jimp read
-
-        } else attempting_download = false; // request error
-      });
-
-    }).catch(err => { attempting_download = false; }); // randomPuppy
-  }
+            }).catch(err => { attempting_download = false; }); // randomPuppy
+    }
 };
 
 
 
 
 io.on(CONNECTION, (socket) => {
-  let auth = false;
+    let auth = false;
 
-  // attempts to add new username
-  socket.on(LOGIN_REQUEST, (username) => {
-    if (auth) return;
+    // attempts to add new username
+    socket.on(LOGIN_REQUEST, (username) => {
+        if (auth) return;
 
-    if (usernames.size >= args.max_players) {
-      socket.emit(LOGIN_FAILURE, {
-        username: username,
-        message: "Player limit reached. Try again later."
-      });
+        if (usernames.size >= args.max_players) {
+            socket.emit(LOGIN_FAILURE, {
+                username: username,
+                message: "Player limit reached. Try again later."
+            });
 
-      return;
-    }
+            return;
+        }
 
-    if (usernames.has(username)) {
-      socket.emit(LOGIN_FAILURE, {
-        username: username,
-        message: "Username already taken."
-      });
+        if (usernames.has(username)) {
+            socket.emit(LOGIN_FAILURE, {
+                username: username,
+                message: "Username already taken."
+            });
 
-      return;
-    }
+            return;
+        }
 
-    // add user to game
-    socket.username = username;
-    usernames.add(username);
-    socket.join(ROOM_AUTH);
-    auth = true;
+        // add user to game
+        socket.username = username;
+        usernames.add(username);
+        socket.join(ROOM_AUTH);
+        auth = true;
 
-    socket.emit(LOGIN_SUCCESS, {
-      username: socket.username,
-      all_usernames: Array.from(usernames),
-      current_state: current_state,
-      current_time: current_time,
-      current_image: current_image,
-      submissions: submissions
+        socket.emit(LOGIN_SUCCESS, {
+            username: socket.username,
+            all_usernames: Array.from(usernames),
+            current_state: current_state,
+            current_time: current_time,
+            current_image: current_image,
+            submissions: submissions
+        });
+
+        // notify players
+        io.to(ROOM_AUTH).emit(USER_JOINED, {
+            username: socket.username
+        });
     });
 
-    // notify players
-    io.to(ROOM_AUTH).emit(USER_JOINED, {
-      username: socket.username
-    });
-  });
+    socket.on(DISCONNECT, () => {
+        if (!auth) return;
 
-  socket.on(DISCONNECT, () => {
-    if (!auth) return;
+        // remove user from game
+        usernames.delete(socket.username);
+        delete usernames[socket.username];
+        socket.leave(ROOM_AUTH);
 
-    // remove user from game
-    usernames.delete(socket.username);
-    delete usernames[socket.username];
-    socket.leave(ROOM_AUTH);
+        auth = false;
 
-    auth = false;
-
-    // notify players
-    io.to(ROOM_AUTH).emit(USER_LEFT, {
-      username: socket.username
-    });
-  });
-
-  socket.on(USER_SUBMISSION, (data) => {
-    if (!auth) return;
-
-    submissions.push({
-      name: socket.username,
-      text: data.text,
-      reacts: {love: 0, funny: 0, shock: 0, sad: 0, angry: 0},
-      votes: 0
-    });
-    console.log(submissions);
-
-    socket.emit(SUBMISSION_RECEIVED, {
-      username: socket.username,
-      text: data.text
+        // notify players
+        io.to(ROOM_AUTH).emit(USER_LEFT, {
+            username: socket.username
+        });
     });
 
-    io.to(ROOM_AUTH).emit(SUBMISSION_COUNT, {
-      submission_count: submissions.length
+    socket.on(USER_SUBMISSION, (data) => {
+        if (!auth) return;
+
+        submissions.push({
+            name: socket.username,
+            text: data.text,
+            votes: 0
+        });
+        console.log(submissions);
+
+        socket.emit(SUBMISSION_RECEIVED, {
+            username: socket.username,
+            text: data.text
+        });
+
+        io.to(ROOM_AUTH).emit(SUBMISSION_COUNT, {
+            submission_count: submissions.length
+        });
     });
-  });
 
-  socket.on(USER_SKIP, () => {
-    if (!auth) return;
+    socket.on(USER_SKIP, () => {
+        if (!auth) return;
 
-    skip_count += 1;
+        skip_count += 1;
 
-    io.to(ROOM_AUTH).emit(SKIP_COUNT, {
-      skip_count: skip_count
+        io.to(ROOM_AUTH).emit(SKIP_COUNT, {
+            skip_count: skip_count
+        });
     });
-  });
 
-  socket.on(USER_VOTE, (data) => {
-    if (!auth) return;
+    socket.on(USER_VOTE, (data) => {
+        if (!auth) return;
 
-    if (data.id < submissions.length) {
-      votes.push({voter: socket.username, id: data.id, react: data.react});
-      console.log(votes);
+        if (data.id < submissions.length) {
+            votes.push({voter: socket.username, id: data.id, react: data.react});
+            console.log(votes);
 
-      submissions[data.id].reacts[data.react] += 1;
-      submissions[data.id].votes += 1;
+            submissions[data.id].votes += 1;
 
-    } else console.log("Invalid id " + data.id + " from " + socket.username + " (max: " + submissions.length + ").")
-  });
+        } else console.log("Invalid id " + data.id + " from " + socket.username + " (max: " + submissions.length + ").")
+    });
 
 });
 
