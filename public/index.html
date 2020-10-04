@@ -33,6 +33,40 @@
   </head>
 
   <body class="bg-light">
+    <!-- User Modal -->
+    <div class="modal fade" id="userModal" tabindex="-1" role="dialog" aria-labelledby="userModalTitle" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="userModalTitle">Users</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body m-0 p-0">
+            <table class="table table-borderless">
+              <thead>
+              <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Points</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr class="table-primary">
+                <td>user123</td>
+                <td>6</td>
+              </tr>
+              <tr>
+                <td>george7</td>
+                <td>1</td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Chat Modal -->
     <div class="modal fade" id="chatModal" tabindex="-1" role="dialog" aria-labelledby="chatModalTitle" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered" role="document">
@@ -64,7 +98,7 @@
     <!-- NAV BAR -->
     <nav class="navbar fixed-top navbar-light bg-light shadow-sm">
       <ul class="nav justify-content-left">
-        <svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-person-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <svg width="1.5em" height="1.5em" data-toggle="modal" data-target="#userModal" viewBox="0 0 16 16" class="bi bi-person-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
           <path fill-rule="evenodd" d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path>
         </svg>
       </ul>
@@ -92,7 +126,6 @@
     <!-- MAIN -->
     <main>
       <div class="container pb-3">
-
         <div class="row">
 
           <!-- Left Column -->
@@ -122,20 +155,21 @@
 
               <div class="media text-muted border-bottom border-gray">
                 <ul class="list-group list-group-horizontal" style="min-width: 100%;">
+
                   <li class="list-group-item meme-font text-middle flex-fill" style="border: 0 none;">
                     <span class="text-black meme-font" style="font-size: 1em;">when bruh momento</span>
                   </li>
                   <li class="list-group-item align-center-middle" style="border: 0 none">
                     <button type="button" class="btn btn-outline-primary">5</button>
                   </li>
+
                 </ul>
               </div>
             </div>
           </div>
 
-        </div>
-
-      </div>
+        </div> <!-- row -->
+      </div> <!-- container -->
     </main>
   </body>
 </html>
