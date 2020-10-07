@@ -1,0 +1,26 @@
+html, body {
+  overflow-x: hidden; /* Prevent scroll on narrow devices */
+}
+
+body {
+  padding-top: 48px;
+}
+
+.lh-100 { line-height: 1; }
+
+.meme-font { font-family: 'Arimo', sans-serif; }
+
+.align-center-middle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.text-middle {
+  display: flex;
+  align-items: center;
+}
+
+.form-control.caption {
+  background-color: #F8F8F8 !important;
+}
