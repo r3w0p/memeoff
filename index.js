@@ -13,18 +13,22 @@ const server = require('http').createServer(app);
 const io = require('socket.io')(server);
 
 
+/* ARGUMENTS */
+
 let args = minimist(process.argv.slice(2), {
     default: {
         port: 3000,
-        min_players: 3,
+        min_players: 1,
         max_players: 10,
-        min_submit: 2,
-        dur_submit: 30,
-        min_vote: 1,
-        dur_vote: 30,
-        dur_winner: 10,
+
+        dur_load: 5,  // todo validate arguments
+        dur_game: 30,
+        dur_winner: 15,
+        min_nickname: 3,
+        max_nickname: 10,
+
         max_width: 400,
-        max_height: 300,
+        max_height: 400,
         subreddits: 'subreddits.txt',
         delimiter: '\n'
     },
@@ -37,65 +41,19 @@ const validateArgument = (invalidCondition, messageOnTrue) => {
     }
 };
 
-const getSubreddits = (file_subred, delimiter) => {
-    let subred;
-
-    try {
-        subred = fs.readFileSync(file_subred, 'utf8')
-            .split(delimiter)
-            .map(function(item) {
-                return item.trim();
-            })
-            .filter(function (item) {
-                return item;
-            });
-
-    } catch (err) {
-        console.error("Failed to get subreddits from '" + args.subreddits + "': " + err.message);
-        process.exit(1);
-    }
-
-    if (!subred || subred.length === 0) {
-        console.error("No subreddits found in '" + args.subreddits + "'.");
-        process.exit(1);
-    }
-
-    return subred;
-};
-
-
-
 // --port
 validateArgument(args.port < 0 || args.port > 65535,
     "Port must be in the range 0 <= n <= 65535.");
 
 // --min_players
-validateArgument(args.min_players < 3 || args.min_players > 100,
+validateArgument(args.min_players < 1 || args.min_players > 100,
     "Minimum players must be in the range 0 <= n <= 100.");
 
 // --max_players
 validateArgument(args.max_players < args.min_players || args.max_players > 100,
     "Maximum players must be in the range min_players <= n <= 100.");
 
-// --min_submit
-validateArgument(args.min_submit < 2 || args.min_submit > args.min_players,
-    "Minimum submissions must be in the range 2 <= n <= min_players.");
-
-// --dur_submit
-validateArgument(args.dur_submit < 1 || args.dur_submit > 1800,
-    "Submit duration must be in the range 1 <= n <= 1800.");
-
-// --min_vote
-validateArgument(args.min_vote < 1 || args.min_vote > args.min_players,
-    "Minimum votes must be in the range 1 <= n <= min_players.");
-
-// --dur_vote
-validateArgument(args.dur_vote < 1 || args.dur_vote > 1800,
-    "Vote duration must be in the range 1 <= n <= 1800.");
-
-// --dur_winner
-validateArgument(args.dur_winner < 1 || args.dur_winner > 1800,
-    "Winner duration must be in the range 1 <= n <= 1800.");
+// todo validate arguments
 
 // --max_width
 validateArgument(args.max_width < 100 || args.max_width > 2000,
@@ -114,7 +72,6 @@ validateArgument(!args.delimiter,
     "A subreddit file delimiter must be specified.");
 
 
-
 /* SERVER SETUP */
 
 server.listen(args.port, () => {
@@ -126,384 +83,126 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 /* CONSTANTS */
 
-const CONNECTION          = 'connection';
-const DISCONNECT          = 'disconnect';
-const RECONNECT           = 'reconnect';
-const RECONNECT_ERROR     = 'reconnect_error';
-const LOGIN_REQUEST       = 'login_request';
-const LOGIN_FAILURE       = 'login_failure';
-const LOGIN_SUCCESS       = 'login_success';
-const USER_JOINED         = 'user_joined';
-const USER_LEFT           = 'user_left';
-const USER_SUBMISSION     = 'user_submission';
-const SUBMISSION_RECEIVED = 'submission_received';
-const SUBMISSION_COUNT    = 'submission_count';
-const USER_SKIP           = 'user_skip';
-const SKIP_COUNT          = 'skip_count';
-const TRANSITION          = 'transition';
-const NEW_IMAGE           = 'new_image';
-const USER_VOTE           = 'user_vote';
+const CONNECTION = 'connection';
+const DISCONNECT = 'disconnect';
 
-const ROOM_AUTH = "room_auth";
+const LOGIN_REQUEST = 'login_request';
+const LOGIN_FAILURE = 'login_failure';
+const LOGIN_SUCCESS = 'login_success';
 
-const PLAYERS = "PLAYERS";
-const START   = "START";
-const SUBMIT  = "SUBMIT";
-const VOTE    = "VOTE";
-const WINNER  = "WINNER";
+const ERROR_PLAYER_LIMIT_REACHED = 'error_player_limit_reached';
+const ERROR_NICKNAME_TAKEN = 'error_nickname_taken';
+const ERROR_INVALID_NICKNAME_LENGTH = 'error_invalid_nickname_length';
+const ERROR_INVALID_NICKNAME_UNCLEAN = 'error_invalid_nickname_unclean';
 
-const STATES = {
-    PLAYERS: {"time": -1},
-    START:   {"time": 5},
-    SUBMIT:  {"time": args.dur_submit},
-    VOTE:    {"time": args.dur_vote},
-    WINNER:  {"time": args.dur_winner}
-};
+const USER_JOINED = 'user_joined';
+const USER_LEFT   = 'user_left';
 
-
+const ROOM_GAME = "room_game";
 
 
 /* VARIABLES */
-let subreddits = getSubreddits(args.subreddits, args.delimiter);
-let usernames = new Set();
-let current_state = "";
-let current_time = -1;
 
-let current_image = "";
-let sent_new_image = false;
-let attempting_download = false;
-let submissions = [];
-let votes = []; // TODO maybe convert to list of voter usernames only?
-let skip_count = 0;
+let nickname_set = new Set();
 
 
-setInterval(() => {
-    if(current_time >= 0)
-        current_time -= 1;
-
-    // Not enough players
-    if (usernames.size < args.min_players) {
-        waitForMorePlayers();
-
-    } else {
-        if(current_state === PLAYERS) {
-            resetGame();
-
-        } else if(current_state === START) {
-            handleStart();
-
-        } else if(current_state === SUBMIT) {
-            handleSubmit();
-
-        } else if(current_state === VOTE) {
-            handleVote();
-
-        } else if(current_state === WINNER) {
-            resetGame();
-        }
-    }
-}, 1000);
-
-
-const stateTransition = (state_name, bundle) => {
-    current_state = state_name;
-    current_time = STATES[current_state].time;
-
-    io.emit(TRANSITION, {
-        current_state: current_state,
-        current_time: current_time,
-        bundle: bundle || {}
-    });
-};
-
-
-const waitForMorePlayers = () => {
-    if (current_state !== PLAYERS)
-        stateTransition(PLAYERS);
-};
-
-
-const resetGame = (force) => {
-    if(force || current_time < 0) {
-        // TODO reset all game variables
-        current_image = "";
-        sent_new_image = false;
-        attempting_download = false;
-        submissions = [];
-        votes = [];
-        skip_count = 0;
-
-        stateTransition(START);
-    }
-};
-
-
-const handleStart = () => {
-    if (!current_image) {
-        // keep trying to get a new image
-        getNewImage();
-
-    } else if (!sent_new_image) {
-        // send new image
-        io.emit(NEW_IMAGE, {
-            image: current_image
-        });
-
-        sent_new_image = true;
-    }
-
-    // transition when new image sent and timer elapse
-    if(sent_new_image && current_time < 0)
-        stateTransition(SUBMIT);
-};
-
-
-const allOnlinePlayersHaveSubmitted = () => {
-    let arr_user = Array.from(usernames);
-    let arr_subs = Array.from(submissions);
-
-    for (let i = 0; i < arr_user.length; i++) {
-        let userHasSubmitted = false;
-
-        for (let j = 0; j < arr_subs.length; j++) {
-            if (arr_user[i] === arr_subs[j].name) {
-                userHasSubmitted = true;
-                break;
-            }
-        }
-
-        if(!userHasSubmitted)
-            return false;
-    }
-
-    return true;
-};
-
-
-const handleSubmit = () => {
-    if (allOnlinePlayersHaveSubmitted()) {
-        stateTransition(VOTE, {submissions: submissions});
-
-    } else if (skip_count > (usernames.size / 2)) {
-        // majority want to skip current image
-        resetGame(true);
-
-    } else if(current_time < 0) {
-        if (submissions.length < args.min_submit)
-            resetGame(true);
-
-        else
-            stateTransition(VOTE, {submissions: submissions});
-    }
-};
-
-
-const allOnlinePlayersHaveVoted = () => {
-    let arr_user = Array.from(usernames);
-    let arr_votes = Array.from(votes);
-
-    for (let i = 0; i < arr_user.length; i++) {
-        let userHasVoted = false;
-
-        for (let j = 0; j < arr_votes.length; j++) {
-            if (arr_user[i] === arr_votes[j].voter) {
-                userHasVoted = true;
-                break;
-            }
-        }
-
-        if(!userHasVoted)
-            return false;
-    }
-
-    return true;
-};
-
-
-const getWinners = () => {
-    let arr_subs = Array.from(submissions);
-    let highest_vote_count = 0;
-    let winners = [];
-
-    // get highest vote count
-    for (let i = 0; i < arr_subs.length; i++) {
-        if (highest_vote_count < arr_subs[i].votes)
-            highest_vote_count = arr_subs[i].votes;
-    }
-
-    // select all users with the highest vote count
-    for (let i = 0; i < arr_subs.length; i++) {
-        if (highest_vote_count === arr_subs[i].votes)
-            winners.push(arr_subs[i]);
-    }
-
-    console.log(winners);
-
-    return winners;
-};
-
-
-const handleVote = () => {
-    if (allOnlinePlayersHaveVoted()) {
-        stateTransition(WINNER, {winners: getWinners()});
-
-    } else if(current_time < 0) {
-        if (votes.length < args.min_vote)
-            resetGame(true);
-        else
-            stateTransition(WINNER, {winners: getWinners()});
-    }
-};
-
-
-const getRandomItem = (items) => {
-    return items[Math.floor(Math.random() * items.length)];
-};
-
-
-const getNewImage = () => {
-    // try to download new image if not already doing so
-    // and one hasn't already been downloaded
-    if(!attempting_download && !current_image) {
-        attempting_download = true;
-
-        // get random image url from random subreddit
-        randomPuppy(getRandomItem(subreddits))
-            .then(imageURL => {
-
-                // download the image
-                request.get(imageURL, function (error, response, body) {
-                    if (!error && response.statusCode === 200) {
-
-                        // modify image
-                        Jimp.read(new Buffer(body))
-                            .then(img => {
-                                let width = Math.min(args.max_width, img.bitmap.width);
-                                let height = Math.min(args.max_height, img.bitmap.height);
-
-                                // resize image and convert to base64
-                                img.resize(width, height).getBase64(Jimp.AUTO, function(e, img64) {
-                                    if(!e)
-                                        current_image = img64; // store base64 image
-
-                                    attempting_download = false;
-                                });
-
-                            }).catch(err => { attempting_download = false; }); // jimp read
-
-                    } else attempting_download = false; // request error
-                });
-
-            }).catch(err => { attempting_download = false; }); // randomPuppy
-    }
-};
-
-
-
+/* SOCKET EVENTS */
 
 io.on(CONNECTION, (socket) => {
     let auth = false;
-
-    // attempts to add new username
-    socket.on(LOGIN_REQUEST, (username) => {
-        if (auth) return;
-
-        if (usernames.size >= args.max_players) {
-            socket.emit(LOGIN_FAILURE, {
-                username: username,
-                message: "Player limit reached. Try again later."
-            });
-
-            return;
-        }
-
-        if (usernames.has(username)) {
-            socket.emit(LOGIN_FAILURE, {
-                username: username,
-                message: "Username already taken."
-            });
-
-            return;
-        }
-
-        // add user to game
-        socket.username = username;
-        usernames.add(username);
-        socket.join(ROOM_AUTH);
-        auth = true;
-
-        socket.emit(LOGIN_SUCCESS, {
-            username: socket.username,
-            all_usernames: Array.from(usernames),
-            current_state: current_state,
-            current_time: current_time,
-            current_image: current_image,
-            submissions: submissions
-        });
-
-        // notify players
-        io.to(ROOM_AUTH).emit(USER_JOINED, {
-            username: socket.username
-        });
-    });
+    console.log(CONNECTION + ": " + socket.id);
 
     socket.on(DISCONNECT, () => {
         if (!auth) return;
 
-        // remove user from game
-        usernames.delete(socket.username);
-        delete usernames[socket.username];
-        socket.leave(ROOM_AUTH);
+        // Remove nickname from the server
+        nickname_set.delete(socket.nickname);
+        delete nickname_set[socket.nickname];
 
+        // Nickname is no longer authorised to be in the game room
+        socket.leave(ROOM_GAME);
         auth = false;
 
-        // notify players
-        io.to(ROOM_AUTH).emit(USER_LEFT, {
-            username: socket.username
+        // Notify players that the user has left
+        io.to(ROOM_GAME).emit(USER_LEFT, {
+            nickname: socket.nickname
         });
+
+        console.log(DISCONNECT + ": " + socket.nickname);
     });
 
-    socket.on(USER_SUBMISSION, (data) => {
-        if (!auth) return;
+    socket.on(LOGIN_REQUEST, (nickname) => {
+        if (auth) return;
 
-        submissions.push({
-            name: socket.username,
-            text: data.text,
-            votes: 0
+        // Sanitise nickname string
+        nickname = nickname.trim();
+
+        // Reject login attempt nickname is invalid
+        if (nickname.length < args.min_nickname || nickname.length > args.max_nickname) {
+            socket.emit(LOGIN_FAILURE, {
+                nickname: nickname,
+                error: ERROR_INVALID_NICKNAME_LENGTH
+            });
+
+            console.log(LOGIN_FAILURE + ": " + nickname);
+            return;
+        }
+
+        let nickname_clean = nickname.replace(/[^a-z0-9áéíóúñü \.,_-]/gim, "");
+
+        // Reject unclean nickname
+        if(nickname.length !== nickname_clean.length) {
+            socket.emit(LOGIN_FAILURE, {
+                nickname: nickname,
+                error: ERROR_INVALID_NICKNAME_UNCLEAN
+            });
+
+            console.log(LOGIN_FAILURE + ": " + nickname);
+            return;
+        }
+
+        // Reject login attempt if game already has maximum amount of players allowed
+        if (nickname_set.size >= args.max_players) {
+            socket.emit(LOGIN_FAILURE, {
+                nickname: nickname,
+                error: ERROR_PLAYER_LIMIT_REACHED
+            });
+
+            console.log(LOGIN_FAILURE + ": " + nickname);
+            return;
+        }
+
+        // Reject login attempt if nickname is already in use by another player
+        if (nickname_set.has(nickname)) {
+            socket.emit(LOGIN_FAILURE, {
+                nickname: nickname,
+                error: ERROR_NICKNAME_TAKEN
+            });
+
+            console.log(LOGIN_FAILURE + ": " + nickname);
+            return;
+        }
+
+        // Accept login attempt and add nickname to the server list
+        socket.nickname = nickname;
+        nickname_set.add(nickname);
+
+        // Nickname is authorised to be in the game room
+        socket.join(ROOM_GAME);
+        auth = true;
+
+        // Notify new player of login attempt success
+        socket.emit(LOGIN_SUCCESS, {
+            nickname: socket.nickname,
+            array_players: Array.from(nickname_set)
         });
-        console.log(submissions);
 
-        socket.emit(SUBMISSION_RECEIVED, {
-            username: socket.username,
-            text: data.text
+        // Notify existing players of login attempt success
+        io.to(ROOM_GAME).emit(USER_JOINED, {
+            nickname: socket.nickname
         });
 
-        io.to(ROOM_AUTH).emit(SUBMISSION_COUNT, {
-            submission_count: submissions.length
-        });
-    });
-
-    socket.on(USER_SKIP, () => {
-        if (!auth) return;
-
-        skip_count += 1;
-
-        io.to(ROOM_AUTH).emit(SKIP_COUNT, {
-            skip_count: skip_count
-        });
-    });
-
-    socket.on(USER_VOTE, (data) => {
-        if (!auth) return;
-
-        if (data.id < submissions.length) {
-            votes.push({voter: socket.username, id: data.id, react: data.react});
-            console.log(votes);
-
-            submissions[data.id].votes += 1;
-
-        } else console.log("Invalid id " + data.id + " from " + socket.username + " (max: " + submissions.length + ").")
+        console.log(LOGIN_SUCCESS + ": " + socket.nickname);
     });
 
 });
-
