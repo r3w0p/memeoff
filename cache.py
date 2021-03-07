@@ -1,16 +1,16 @@
 import requests
 import csv
 from time import time_ns
+from math import floor
 from random import shuffle, choice
-
-from urllib.request import urlretrieve
 from slugify import slugify
+from PIL import Image
 from tools import *
 
 
-PATH_CACHE_CSV_USED = "cache/csv/used.csv"
-PATH_CACHE_CSV_UNUSED = "cache/csv/unused.csv"
-PATH_CACHE_CSV_BAD = "cache/csv/bad.csv"
+PATH_CACHE_CSV_USED = "./cache/csv/used.csv"
+PATH_CACHE_CSV_UNUSED = "./cache/csv/unused.csv"
+PATH_CACHE_CSV_BAD = "./cache/csv/bad.csv"
 PATH_CACHE_IMG = "./cache/img"
 URL_REDDIT = "https://www.reddit.com/r/{}.json"
 
@@ -74,18 +74,32 @@ def file_name_from_url(url_str) -> str:
     )
 
 
-def download_random_image(cache, cache_key=UNUSED) -> str:
-    random_image_url = choice(list(cache[cache_key].keys()))
-    return download_image(random_image_url)
+def download_random_image(cache, force_width, key=UNUSED, save=True):
+    random_image_url = choice(list(cache[key].keys()))
+    return download_image(random_image_url, force_width)
 
 
-def download_image(image_url) -> str:
+def download_image(image_url, force_width):
     image_slug = file_name_from_url(image_url)
     path_save = "{}/{}".format(PATH_CACHE_IMG, image_slug)
 
     if not Path(path_save).is_file():
         print("Downloading image {}".format(image_url))
-        urlretrieve(image_url, path_save)
+        image = Image.open(requests.get(image_url, stream=True).raw)
+
+        if image.size[0] > force_width:
+            reduction = (image.size[0] - force_width) / image.size[0]
+            height = floor(image.size[1] * (1 - reduction))
+
+            image = image.resize((force_width, height))
+
+        elif image.size[0] < force_width:
+            increase = (image.size[0] + force_width) / image.size[0]
+            height = floor(image.size[1] * increase)
+
+            image = image.resize((force_width, height))
+
+        image.save(path_save)
 
     return path_save
 

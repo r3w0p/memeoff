@@ -1,19 +1,34 @@
 import discord
 import argparse
+from math import floor
 from pprint import pprint
+from textwrap import wrap
+from PIL import ImageDraw, ImageFont
 from log import *
 from subreddits import *
 from cache import *
 
 # constants
-LOG_DISCORD_NAME = "discord"
-LOG_DISCORD_PATH = "./logs/discord.log"
-
 SYM_M = "-M"
 SYM_T = "-T"
 SYM_IT = "-IT"
 SYM_IB = "-IB"
 SYM_CHECK = [SYM_T, SYM_IT, SYM_IB]
+
+LOG_DISCORD_NAME = "discord"
+LOG_DISCORD_PATH = "./logs/discord.log"
+
+FONT_SIZE_I = 40
+FONT_ANTON_PATH = "./config/fonts/Anton/Anton-Regular.ttf"
+FONT_ANTON = ImageFont.truetype(FONT_ANTON_PATH, FONT_SIZE_I)
+
+IMAGE_WIDTH_MAX = 500
+
+I_COLOUR_SHADOW = "black"
+I_COLOUR_FILL = "white"
+I_BORDER = 2
+I_HEIGHT_PAD = 15
+T_HEIGHT_FORCE = 45
 
 # arguments
 parser = argparse.ArgumentParser()
@@ -38,15 +53,7 @@ async def on_message(message):
     if message.author == client.user:
         return
 
-    content = message.content.split(' ')
-    commands = parse_message_content(content, SYM_M, SYM_CHECK)
-
-    if commands is not None:
-        pprint(commands)
-
-    # path_image = download_random_image(cache)
-    # with open(path_image, 'rb') as f:
-    #    await message.channel.send(file=discord.File(f))
+    content = message.content
 
 
 print("Init logs")
@@ -103,6 +110,35 @@ def parse_message_content(content, sym_start, sym_check):
     return commands
 
 
-pprint(parse_message_content(
-    "-m some command -t me when the -it bruh -ib bottom text",
-    SYM_M, SYM_CHECK))
+def on_message_stub(content):
+    commands = parse_message_content(content, SYM_M, SYM_CHECK)
+
+    if commands is not None:
+        image_path = download_random_image(cache, IMAGE_WIDTH_MAX)
+        image = Image.open(image_path)
+        draw = ImageDraw.Draw(image)
+
+        i_width, i_height = image.size
+        text_lines = wrap(' '.join(commands[SYM_IB]), width=20)
+
+        for i, text in enumerate(text_lines):
+            t_width, t_height = draw.textsize(text, font=FONT_ANTON)
+
+            x = (i_width - t_width) / 2
+            y = (i_height - T_HEIGHT_FORCE - I_HEIGHT_PAD) - \
+                (len(text_lines) - (i + 1)) * T_HEIGHT_FORCE
+
+            for pos in [
+                (x - I_BORDER, y - I_BORDER),
+                (x + I_BORDER, y - I_BORDER),
+                (x - I_BORDER, y + I_BORDER),
+                (x + I_BORDER, y + I_BORDER)
+            ]:
+                draw.text(pos, text, font=FONT_ANTON, fill=I_COLOUR_SHADOW)
+
+            draw.text((x, y), text, font=FONT_ANTON, fill=I_COLOUR_FILL)
+
+        image.save('{}.{}'.format(time_ns(), image.format))
+
+
+on_message_stub("-m -ib me when the")
