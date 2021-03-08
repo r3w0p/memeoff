@@ -3,22 +3,26 @@ import argparse
 from textwrap import wrap
 from io import BytesIO
 from PIL import ImageDraw, ImageFont, ImageOps
+from pprint import pprint
 from log import *
 from subreddits import *
 from cache import *
+from tools import *
 
 # constants
 SYM_M = "-M"
+
 SYM_T = "-T"
 SYM_IT = "-IT"
 SYM_IB = "-IB"
-SYM_CHECK = [SYM_T, SYM_IT, SYM_IB]
+SYM_URL = "-URL"
+SYM_CHECK = [SYM_T, SYM_IT, SYM_IB, SYM_URL]
 
 LOG_DISCORD_NAME = "discord"
 LOG_DISCORD_PATH = "./logs/discord.log"
 
 FONT_ARIMO_PATH = "./config/fonts/Arimo-Regular/Arimo-Regular.ttf"
-FONT_ARIMO = ImageFont.truetype(FONT_ARIMO_PATH, 40)
+FONT_ARIMO = ImageFont.truetype(FONT_ARIMO_PATH, 36)
 
 FONT_ANTON_PATH = "./config/fonts/Anton/Anton-Regular.ttf"
 FONT_ANTON = ImageFont.truetype(FONT_ANTON_PATH, 40)
@@ -33,18 +37,19 @@ I_HEIGHT_PAD = 15
 I_HEIGHT_FORCE = 45
 
 T_COLOUR_FILL = "black"
-T_WIDTH_WRAP = 25
-T_HEIGHT_FORCE = 40
+T_WIDTH_WRAP = 28
+T_HEIGHT_FORCE = 45
 T_PAD = 15
+T_RADIUS = 60
+T_RADIUS_MULTIPLY = 3
 
 # arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('-token', type=str)
 args = parser.parse_args()
 
-
-def _index_first(lst, val, default=-1):
-    return lst.index(val) if val in lst else default
+# discord
+client = discord.Client()
 
 
 def parse_message_content(content, sym_start, sym_check):
@@ -53,10 +58,10 @@ def parse_message_content(content, sym_start, sym_check):
 
     sym_all = [sym_start] + sym_check
 
-    positions = [(_index_first(csu, sym), sym) for sym in sym_all]
+    positions = [(index_first(csu, sym), sym) for sym in sym_all]
 
     if not (positions[0][0] == 0 and positions[0][1] == sym_start):
-        return None  # incorrect first command
+        return None  # message is not for the bot
 
     positions_sorted = sorted(positions)
     positions_len = len(positions)
@@ -87,7 +92,8 @@ def add_corners(image, radius):
     # Temporarily double image size so that corners appear smoother when
     # returned back to its original size
     w_orig, h_orig = image.size
-    image = image.resize((w_orig*2, h_orig*2))
+    image = image.resize((w_orig * T_RADIUS_MULTIPLY,
+                          h_orig * T_RADIUS_MULTIPLY))
     w, h = image.size
 
     # Add corners
@@ -96,9 +102,12 @@ def add_corners(image, radius):
     draw.ellipse((0, 0, radius * 2, radius * 2), fill=255)
 
     alpha = Image.new('L', image.size, "white")
-    alpha.paste(circle.crop((0, 0, radius, radius)), (0, 0))
-    alpha.paste(circle.crop((0, radius, radius, radius * 2)), (0, h - radius))
-    alpha.paste(circle.crop((radius, 0, radius * 2, radius)), (w - radius, 0))
+    alpha.paste(circle.crop((0, 0, radius, radius)),
+                (0, 0))
+    alpha.paste(circle.crop((0, radius, radius, radius * 2)),
+                (0, h - radius))
+    alpha.paste(circle.crop((radius, 0, radius * 2, radius)),
+                (w - radius, 0))
     alpha.paste(circle.crop((radius, radius, radius * 2, radius * 2)),
                 (w - radius, h - radius))
     image.putalpha(alpha)
@@ -116,7 +125,7 @@ def add_corners(image, radius):
 
 def apply_format_twitter(image, list_text):
     text_lines = wrap(' '.join(list_text), width=T_WIDTH_WRAP)
-    image = add_corners(image, 20)
+    image = add_corners(image, T_RADIUS)
 
     top = (T_PAD * 2) + (len(text_lines) * T_HEIGHT_FORCE)
     border = (T_PAD, top, T_PAD, T_PAD)
@@ -128,8 +137,7 @@ def apply_format_twitter(image, list_text):
         y = T_PAD + (i * T_HEIGHT_FORCE)
         draw.text((x, y), text, font=FONT_ARIMO, fill=T_COLOUR_FILL)
 
-    image.show()
-    exit(0)
+    return image
 
 
 def apply_format_impact(image, list_text, top):
@@ -159,24 +167,7 @@ def apply_format_impact(image, list_text, top):
 
         draw.text((x, y), text, font=FONT_ANTON, fill=I_COLOUR_FILL)
 
-
-# discord
-client = discord.Client()
-
-print("Init logs")
-logger_discord = init_log(LOG_DISCORD_NAME, LOG_DISCORD_PATH)
-
-print("Init subreddits")
-subreddits = init_subreddits()
-
-print("Init cache")
-cache = init_cache()
-
-print("Updating cache")
-# update_cache_reddit(cache, subreddits)
-
-print("Starting bot")
-client.run(args.token)
+    return image
 
 
 @client.event
@@ -192,21 +183,49 @@ async def on_message(message):
     commands = parse_message_content(message.content, SYM_M, SYM_CHECK)
 
     if commands is not None:
-        image_path = download_random_image(cache, IMAGE_WIDTH_MAX)
+        if SYM_URL in commands and len(commands[SYM_URL]) > 0:
+            image_path = download_image(commands[SYM_URL][0], IMAGE_WIDTH_MAX)
+        else:
+            image_path = download_random_image(cache, IMAGE_WIDTH_MAX)
+
         image = Image.open(image_path)
+        image_format = image.format
 
         if SYM_IT in commands:
-            apply_format_impact(image, commands[SYM_IT], True)
+            image = apply_format_impact(image, commands[SYM_IT], True)
 
         if SYM_IB in commands:
-            apply_format_impact(image, commands[SYM_IB], False)
+            image = apply_format_impact(image, commands[SYM_IB], False)
 
         if SYM_T in commands:
-            apply_format_twitter(image, commands[SYM_T])
+            image = apply_format_twitter(image, commands[SYM_T])
 
         with BytesIO() as image_binary:
-            image.save(image_binary, image.format)
+            image.save(image_binary, image_format)
             image_binary.seek(0)
-            await message.channel.send(discord.File(
-                fp=image_binary,
-                filename='{}.{}'.format(time_ns(), image.format)))
+
+            await message.channel.send(
+                message.author.mention,
+                file=discord.File(
+                    fp=image_binary,
+                    filename='{}.{}'.format(time_ns(), image_format)
+                )
+            )
+
+            await message.delete()
+
+
+print("Init logs")
+logger_discord = init_log(LOG_DISCORD_NAME, LOG_DISCORD_PATH)
+
+print("Init subreddits")
+subreddits = init_subreddits()
+
+print("Init cache")
+cache = init_cache()
+
+print("Updating cache")
+# update_cache_reddit(cache, subreddits)
+
+print("Starting bot")
+client.run(args.token)
