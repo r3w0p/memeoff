@@ -184,9 +184,12 @@ async def on_message(message):
     commands = parse_message_content(message.content, SYM_M, SYM_CHECK)
 
     if commands is not None:
+        image_path = None
+
         if SYM_URL in commands and len(commands[SYM_URL]) > 0:
             image_path = download_image(commands[SYM_URL][0], IMAGE_WIDTH_MAX)
-        else:
+
+        while image_path is None:
             image_path = download_random_image(cache, IMAGE_WIDTH_MAX)
 
         image = Image.open(image_path)

@@ -93,22 +93,23 @@ def download_image(image_url, force_width):
     path_save = "{}/{}".format(PATH_CACHE_IMG, image_slug)
 
     if not Path(path_save).is_file():
-        print("Downloading image {}".format(image_url))
-        image = Image.open(requests.get(image_url, stream=True).raw)
+        try:
+            print("Downloading image {}".format(image_url))
+            image = Image.open(requests.get(image_url, stream=True).raw)
 
-        if image.size[0] > force_width:
-            reduction = (image.size[0] - force_width) / image.size[0]
-            height = floor(image.size[1] * (1 - reduction))
+            if image.size[0] > force_width:
+                reduction = (image.size[0] - force_width) / image.size[0]
+                height = floor(image.size[1] * (1 - reduction))
 
-            image = image.resize((force_width, height))
+                image = image.resize((force_width, height))
 
-        elif image.size[0] < force_width:
-            increase = (image.size[0] + force_width) / image.size[0]
-            height = floor(image.size[1] * increase)
+            elif image.size[0] < force_width:
+                return None  # image too small
 
-            image = image.resize((force_width, height))
+            image.save(path_save)
 
-        image.save(path_save)
+        except Exception as e:  # todo catch more specific exceptions
+            return None
 
     return path_save
 
