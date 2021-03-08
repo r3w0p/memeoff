@@ -1,0 +1,11 @@
+.. image:: https://img.shields.io/github/license/r3w0p/memeoff.svg
+   :target: https://github.com/r3w0p/memeoff/blob/master/LICENSE
+   :alt: License
+
+.. image:: https://img.shields.io/github/last-commit/r3w0p/memeoff.svg
+   :target: https://github.com/r3w0p/memeoff/graphs/commit-activity
+   :alt: Last Commit
+
+.. image:: https://img.shields.io/badge/donate-buy%20me%20a%20coffee-orange.svg
+   :target: https://www.buymeacoffee.com/r3w0p
+   :alt: Buy Me A Coffee
