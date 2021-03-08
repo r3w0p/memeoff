@@ -2,7 +2,9 @@ import discord
 import argparse
 from textwrap import wrap
 from io import BytesIO
-from PIL import ImageDraw, ImageFont, ImageOps
+import PIL.ImageDraw as ImageDraw
+import PIL.ImageFont as ImageFont
+import PIL.ImageOps as ImageOps
 from pprint import pprint
 from log import *
 from subreddits import *
