@@ -29,6 +29,9 @@ RETRY_AFTER = "Retry-After"
 STATUS_TOO_MANY_REQUESTS = 429
 STATUS_OK = 200
 
+UPDATE_WAIT_SECONDS = 60 * 5
+cache_last_update = 0
+
 
 def init_cache() -> dict:
     file_touch(PATH_CACHE_CSV_USED)
@@ -42,7 +45,13 @@ def init_cache() -> dict:
 
 
 def update_cache_reddit(
-        cache, subreddits, shuffle_first=True, stop_first_success=True):
+        cache,
+        subreddits,
+        shuffle_first=True,
+        stop_first_success=True):
+
+    if (time_ns() - cache_last_update) / 1e+9 < UPDATE_WAIT_SECONDS:
+        return
 
     if shuffle_first:
         shuffle(subreddits)

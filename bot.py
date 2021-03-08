@@ -8,6 +8,7 @@ from log import *
 from subreddits import *
 from cache import *
 from tools import *
+from time import sleep
 
 # constants
 SYM_M = "-M"
@@ -214,6 +215,8 @@ async def on_message(message):
 
             await message.delete()
 
+        update_cache_reddit(cache, subreddits)
+
 
 print("Init logs")
 logger_discord = init_log(LOG_DISCORD_NAME, LOG_DISCORD_PATH)
@@ -225,7 +228,7 @@ print("Init cache")
 cache = init_cache()
 
 print("Updating cache")
-# update_cache_reddit(cache, subreddits)
+update_cache_reddit(cache, subreddits)
 
 print("Starting bot")
 client.run(args.token)

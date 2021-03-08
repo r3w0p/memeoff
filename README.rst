@@ -17,4 +17,4 @@
 
 |
 
-A Discord bot for rapid meme creation and meme battling with friends.
+A Discord bot for fast meme creation and meme battling with friends.
