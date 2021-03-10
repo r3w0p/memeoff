@@ -233,7 +233,7 @@ print("Init cache")
 cache = init_cache()
 
 print("Updating cache")
-update_cache_reddit(cache, subreddits, stop_first_success=False)  # todo make stop_first_success=False the default
+update_cache_reddit(cache, subreddits, stop_first_success=False)  # todo change stop_first_success stop_first_failure
 
 while len(cache[UNUSED]) == 0:
     print("Unused cache is empty. Reattempting cache update in 5 minutes...")
