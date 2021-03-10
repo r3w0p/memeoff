@@ -233,7 +233,12 @@ print("Init cache")
 cache = init_cache()
 
 print("Updating cache")
-update_cache_reddit(cache, subreddits)
+while len(cache[UNUSED]) == 0:
+    update_cache_reddit(cache, subreddits)
+    
+    if len(cache[UNUSED]) == 0:
+        print("Unused cache is empty. Reattempting cache update in 60 seconds...")
+        sleep(60)
 
 print("Starting bot")
 client.run(args.token)
