@@ -24,7 +24,7 @@ SYM_CHECK = [SYM_T, SYM_IT, SYM_IB, SYM_URL]
 LOG_DISCORD_NAME = "discord"
 LOG_DISCORD_PATH = "./logs/discord.log"
 
-FONT_ARIMO_PATH = "./config/fonts/Arimo-Regular/Arimo-Regular.ttf"
+FONT_ARIMO_PATH = "./config/fonts/Arimo/Arimo-Regular.ttf"
 FONT_ARIMO = ImageFont.truetype(FONT_ARIMO_PATH, 36)
 
 FONT_ANTON_PATH = "./config/fonts/Anton/Anton-Regular.ttf"
