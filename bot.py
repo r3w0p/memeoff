@@ -233,12 +233,12 @@ print("Init cache")
 cache = init_cache()
 
 print("Updating cache")
+update_cache_reddit(cache, subreddits, stop_first_success=False)  # todo make stop_first_success=False the default
+
 while len(cache[UNUSED]) == 0:
-    update_cache_reddit(cache, subreddits, stop_first_success=False)  # todo make stop_first_success=False the default
-    
-    if len(cache[UNUSED]) == 0:
-        print("Unused cache is empty. Reattempting cache update in 5 minutes...")
-        sleep(60 * 5)  # todo change update_cache_reddit so that wait period is provided as an argument instead
+    print("Unused cache is empty. Reattempting cache update in 5 minutes...")
+    sleep(60 * 5)  # todo change update_cache_reddit so that wait period is provided as an argument instead
+    update_cache_reddit(cache, subreddits, stop_first_success=False)
 
 print("Starting bot")
 client.run(args.token)
