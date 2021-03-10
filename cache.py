@@ -95,7 +95,7 @@ def download_image(image_url, force_width):
     if not Path(path_save).is_file():
         try:
             print("Downloading image {}".format(image_url))
-            image = Image.open(requests.get(image_url, stream=True).raw)
+            image = Image.open(requests.get(image_url, headers = {'User-agent': str(time_ns())}, stream=True).raw)
 
             if image.size[0] > force_width:
                 reduction = (image.size[0] - force_width) / image.size[0]
