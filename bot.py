@@ -220,7 +220,7 @@ async def on_message(message):
 
             await message.delete()
 
-        update_cache_reddit(cache, subreddits)
+        update_cache_reddit(cache, subreddits, stop_first_success=False)
 
 
 print("Init logs")
@@ -234,11 +234,11 @@ cache = init_cache()
 
 print("Updating cache")
 while len(cache[UNUSED]) == 0:
-    update_cache_reddit(cache, subreddits)
+    update_cache_reddit(cache, subreddits, stop_first_success=False)  # todo make stop_first_success=False the default
     
     if len(cache[UNUSED]) == 0:
-        print("Unused cache is empty. Reattempting cache update in 60 seconds...")
-        sleep(60)
+        print("Unused cache is empty. Reattempting cache update in 5 minutes...")
+        sleep(60 * 5)  # todo change update_cache_reddit so that wait period is provided as an argument instead
 
 print("Starting bot")
 client.run(args.token)
