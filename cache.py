@@ -49,6 +49,7 @@ def update_cache_reddit(
         subreddits,
         shuffle_first=True,
         stop_first_success=True):
+    global cache_last_update
 
     if (time_ns() - cache_last_update) / 1e+9 < UPDATE_WAIT_SECONDS:
         return
