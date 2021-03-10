@@ -68,6 +68,8 @@ def update_cache_reddit(
                 cache[UNUSED][image_url] = timestamp
 
             _write_cache_file(cache, UNUSED, PATH_CACHE_CSV_UNUSED)
+            
+            cache_last_update = time_ns()
 
             if stop_first_success:
                 break
