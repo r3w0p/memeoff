@@ -1,7 +1,7 @@
 from pathlib import Path
 
 
-PATH_CONFIG_SUBREDDITS = "./config/subreddits.txt"
+PATH_CONFIG_SUBREDDITS = "config/subreddits.txt"
 
 
 def init_subreddits() -> list:

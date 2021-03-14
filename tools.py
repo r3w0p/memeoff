@@ -13,3 +13,8 @@ def file_touch(path_file) -> None:
 
 def index_first(lst, val, default=-1):
     return lst.index(val) if val in lst else default
+
+
+def print_info(logger, message):
+    print(message)
+    logger.info(message)

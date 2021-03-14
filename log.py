@@ -4,7 +4,7 @@ from tools import *
 
 def init_log(name_log, path_log):
     logger = logging.getLogger(name_log)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
     file_touch(path_log)
 
     handler = logging.FileHandler(
