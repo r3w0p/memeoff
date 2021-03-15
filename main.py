@@ -5,6 +5,7 @@ from time import sleep
 from subreddits import *
 from meme import *
 from cache import *
+from pprint import pprint
 
 
 # constants
@@ -71,6 +72,38 @@ def parse_message_content(content, sym_start, sym_check):
     return commands
 
 
+def extract_image(message, commands):
+    # Attachment
+    if len(message.attachments) > 0:
+        print_info(logger_bot, "{}: attachment {}"
+                   .format(message.author, message.attachments[0].url))
+
+        return download_image(
+            image_url=message.attachments[0].url,
+            min_width=IMAGE_WIDTH_MIN,
+            force_width=IMAGE_WIDTH_FORCE)
+
+    # Custom URL
+    elif SYM_URL in commands and len(commands[SYM_URL]) > 0:
+        print_info(logger_bot, "{}: custom url {}"
+                   .format(message.author, commands[SYM_URL][0]))
+
+        return download_image(
+            image_url=commands[SYM_URL][0],
+            min_width=IMAGE_WIDTH_MIN,
+            force_width=IMAGE_WIDTH_FORCE)
+
+    # Random Image
+    else:
+        print_info(logger_bot, "{}: random image".format(message.author))
+
+        return download_random_image(
+            cache=cache,
+            min_width=IMAGE_WIDTH_MIN,
+            force_width=IMAGE_WIDTH_FORCE,
+            attempts=3)
+
+
 @client.event
 async def on_ready():
     print_info(logger_bot, "Logged in as {}".format(client.user))
@@ -84,131 +117,57 @@ async def on_message(message):
     commands = parse_message_content(message.content, SYM_M, SYM_CHECK)
 
     if commands is not None:
-        if len(message.attachments) > 0:
+        try:
+            image, image_fname = extract_image(message, commands)
 
-            print_info(logger_bot, "{}: attachment {}"
-                       .format(message.author, message.attachments[0].url))
+        except InvalidImageURLException:
+            await message.channel.send(
+                "{} The image provided is invalid. "
+                "It must be a JPEG or PNG image."
+                .format(message.author.mention)
+            )
+            return
 
-            # if an attachment was passed, download it
-            try:
-                image, image_fname = download_image(
-                    image_url=message.attachments[0].url,
-                    min_width=IMAGE_WIDTH_MIN,
-                    force_width=IMAGE_WIDTH_FORCE)
+        except ImageDownloadException:
+            await message.channel.send(
+                "{} Unable to download the image provided."
+                .format(message.author.mention)
+            )
+            return
 
-            except InvalidImageURLException:
-                await message.channel.send(
-                    "{} The attachment you provided was invalid. "
-                    "It must be a JPEG or PNG image."
-                    .format(message.author.mention)
-                )
-                return
+        except ImageLoadException:
+            await message.channel.send(
+                "{} Unable to open the image provided."
+                .format(message.author.mention)
+            )
+            return
 
-            except ImageDownloadException:
-                await message.channel.send(
-                    "{} Unable to download the attached image."
-                    .format(message.author.mention)
-                )
-                return
+        except ImageTooSmallException:
+            await message.channel.send(
+                "{} The image provided is too small. "
+                "Images must have a width of at least {}px."
+                .format(message.author.mention, IMAGE_WIDTH_MIN)
+            )
+            return
 
-            except ImageLoadException:
-                await message.channel.send(
-                    "{} Unable to open the attached image."
-                    .format(message.author.mention)
-                )
-                return
+        except RandomCacheDownloadException:
+            await message.channel.send(
+                "{} Failed to download random image. "
+                "Please try again."
+                .format(message.author.mention)
+            )
+            return
 
-            except ImageTooSmallException:
-                await message.channel.send(
-                    "{} The attached image you provided was too small. "
-                    "Images must have a width of at least {}px."
-                    .format(message.author.mention, IMAGE_WIDTH_MIN)
-                )
-                return
+        except Exception:
+            await message.channel.send(
+                "{} An unknown problem occurred. "
+                "Please try again."
+                .format(message.author.mention)
+            )
+            return
 
-            except Exception:
-                await message.channel.send(
-                    "{} An unknown problem occurred. "
-                    "Please try again."
-                    .format(message.author.mention)
-                )
-                return
-
-            finally:
-                await message.delete()
-
-        elif SYM_URL in commands and len(commands[SYM_URL]) > 0:
+        finally:
             await message.delete()
-
-            print_info(logger_bot, "{}: custom url {}"
-                       .format(message.author, commands[SYM_URL][0]))
-
-            # if custom image url was passed, download it
-            try:
-                image, image_fname = download_image(
-                    image_url=commands[SYM_URL][0],
-                    min_width=IMAGE_WIDTH_MIN,
-                    force_width=IMAGE_WIDTH_FORCE)
-
-            except InvalidImageURLException:
-                await message.channel.send(
-                    "{} The image URL you provided was invalid. "
-                    "URLs must be a direct link to a JPEG or PNG image."
-                    .format(message.author.mention)
-                )
-                return
-
-            except ImageDownloadException:
-                await message.channel.send(
-                    "{} Unable to download the image from the provided URL."
-                    .format(message.author.mention)
-                )
-                return
-
-            except ImageLoadException:
-                await message.channel.send(
-                    "{} Unable to open the image downloaded from the provided "
-                    "URL."
-                    .format(message.author.mention)
-                )
-                return
-
-            except ImageTooSmallException:
-                await message.channel.send(
-                    "{} The image you provided was too small. "
-                    "Images must have a width of at least {}px."
-                    .format(message.author.mention, IMAGE_WIDTH_MIN)
-                )
-                return
-
-            except Exception:
-                await message.channel.send(
-                    "{} An unknown problem occurred. "
-                    "Please try again."
-                    .format(message.author.mention)
-                )
-                return
-
-        else:
-            await message.delete()
-
-            print_info(logger_bot, "{}: random image".format(message.author))
-
-            # no custom image, download random image instead
-            image, image_fname = download_random_image(
-                cache=cache,
-                min_width=IMAGE_WIDTH_MIN,
-                force_width=IMAGE_WIDTH_FORCE,
-                attempts=3,
-                default_used=True)
-
-            if image is None:
-                await message.channel.send(
-                    "{} A problem occurred when downloading an image. "
-                    "Please try again."
-                    .format(message.author.mention)
-                )
-                return
 
         # impact format
         if SYM_IT in commands:
@@ -220,6 +179,8 @@ async def on_message(message):
         # twitter format
         if SYM_T in commands:
             image = apply_format_twitter(image, commands[SYM_T])
+
+        # todo demotivational format
 
         # send to discord
         with BytesIO() as image_binary:

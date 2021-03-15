@@ -46,6 +46,10 @@ class InvalidImageURLException(Exception):
     """When an image URL is invalid."""
 
 
+class RandomCacheDownloadException(Exception):
+    """When a random image failed to download from the cache."""
+
+
 class ImageDownloadException(Exception):
     """When an image failed to download."""
 
@@ -114,49 +118,46 @@ def update_cache_reddit(
     _log_cache(cache)
 
 
-def download_random_image(
-        cache, min_width=0, force_width=0, attempts=1, default_used=True):
+def download_random_image(cache, min_width=0, force_width=0, attempts=1):
+    if len(cache[UNUSED]) > 0:
+        # select from unused cache, if any
+        cache_key = UNUSED
+    elif len(cache[USED]) > 0:
+        # select from used cache, if unused is empty
+        cache_key = USED
+    else:
+        # caches are empty
+        raise RandomCacheDownloadException()
 
     image = None
     image_fname = None
     attempt = 0
+    attempts = max(1, attempts)
 
-    if len(cache[UNUSED]) > 0:
-        # download a random unused image
-        while image is None and attempt < attempts:
-            attempt += 1
-            random_image_url = choice(list(cache[UNUSED].keys()))
-            try:
-                image, image_fname = download_image(
-                    random_image_url, min_width, force_width)
-            except Exception as e:
-                logger_cache.info(
-                    "Exception for random unused image download {}: {}"
-                    .format(random_image_url, e))
+    while (image is None and image_fname is None) and attempt < attempts:
+        attempt += 1
+        random_image_url = choice(list(cache[cache_key].keys()))
 
-                # unused image is moved to bad cache
-                cache[UNUSED].pop(random_image_url, None)
-                cache[BAD][random_image_url] = time_ns()
-
-            # move to used cache if image download was successful
-            if image is not None:
-                cache[UNUSED].pop(random_image_url, None)
-                cache[USED][random_image_url] = time_ns()
-
-    if image is None and default_used and len(cache[USED]) > 0:
-        # download a random used image
-        random_image_url = choice(list(cache[USED].keys()))
         try:
             image, image_fname = download_image(
                 random_image_url, min_width, force_width)
+
         except Exception as e:
             logger_cache.info(
-                "Exception for random used image download {}: {}"
-                .format(random_image_url, e))
+                "Exception for random image download {} (attempt {}/{}): {}"
+                .format(random_image_url, attempt, attempts, e))
 
-            # used image is moved to bad cache
-            cache[USED].pop(random_image_url, None)
+            # unsuccessful image url is moved to bad cache
+            cache[cache_key].pop(random_image_url, None)
             cache[BAD][random_image_url] = time_ns()
+
+        # successful image url is moved to used cache if from unused cache
+        if cache_key == UNUSED:
+            cache[UNUSED].pop(random_image_url, None)
+            cache[USED][random_image_url] = time_ns()
+
+    if image is None or image_fname is None:
+        raise RandomCacheDownloadException()
 
     return image, image_fname
 
@@ -234,8 +235,6 @@ def download_image(image_url, min_width=0, force_width=0):
             image = image.resize((force_width, height_increased))
 
     return image, slugify_image_url(image_url)
-
-
 
 
 def _scrape_subreddit_image_urls(subreddit) -> (int, list):
