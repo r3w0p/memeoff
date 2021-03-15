@@ -1,4 +1,12 @@
-.. image:: https://raw.githubusercontent.com/r3w0p/memeoff/newgame/config/images/logo/400.png
+.. |ss| raw:: html
+
+   <strike>
+
+.. |se| raw:: html
+
+   </strike>
+
+.. image:: https://raw.githubusercontent.com/r3w0p/memeoff/master/config/images/logo/400.png
    :alt: Memeoff
 
 |
@@ -10,9 +18,6 @@
 .. image:: https://img.shields.io/github/license/r3w0p/memeoff.svg
    :target: https://github.com/r3w0p/memeoff/blob/master/LICENSE
    :alt: License
-
-.. image:: https://img.shields.io/github/repo-size/r3w0p/memeoff.svg
-   :alt: Repo Size
 
 .. image:: https://img.shields.io/github/last-commit/r3w0p/memeoff.svg
    :target: https://github.com/r3w0p/memeoff/graphs/commit-activity
@@ -28,4 +33,10 @@
 
 |
 
-A Discord bot for fast meme creation and meme battling with friends.
+A Discord bot for fast meme creation |ss| and meme battling with friends |se|.
+
+This software is a **work in progress** and all aspects of the software are subject to change.
+
+- Read the `Wiki <https://github.com/r3w0p/memeoff/wiki/>`_ for help on installation and setup.
+- Submit bugs and feature requests using `Issues <https://github.com/r3w0p/memeoff/issues/>`_.
+- Track development progress at `Projects <https://github.com/r3w0p/memeoff/projects/>`_.
