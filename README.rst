@@ -31,12 +31,17 @@
    :target: https://www.buymeacoffee.com/r3w0p
    :alt: Buy Me A Coffee
 
+.. image:: https://img.shields.io/badge/merch-redbubble-red.svg
+   :target: https://www.redbubble.com/people/r3w0p
+   :alt: Redbubble
+
 |
 
 A Discord bot for fast meme creation |ss| and meme battling with friends |se|.
 
-This software is a **work in progress** and all aspects of the software are subject to change.
+This software is a **work in progress**.
+All aspects of the software are subject to change `until v1.0 <https://github.com/r3w0p/memeoff/projects/1>`_.
 
-- Read the `Wiki <https://github.com/r3w0p/memeoff/wiki/>`_ for help on installation and setup.
+- Read the `Wiki <https://github.com/r3w0p/memeoff/wiki/>`_ for help with installation.
 - Submit bugs and feature requests using `Issues <https://github.com/r3w0p/memeoff/issues/>`_.
 - Track development progress at `Projects <https://github.com/r3w0p/memeoff/projects/>`_.
