@@ -2,10 +2,10 @@ from textwrap import wrap
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 
-FONT_ARIMO_PATH = "config/fonts/Arimo/Arimo-Regular.ttf"
+FONT_ARIMO_PATH = "./config/fonts/Arimo/Arimo-Regular.ttf"
 FONT_ARIMO = ImageFont.truetype(FONT_ARIMO_PATH, 36)
 
-FONT_ANTON_PATH = "config/fonts/Anton/Anton-Regular.ttf"
+FONT_ANTON_PATH = "./config/fonts/Anton/Anton-Regular.ttf"
 FONT_ANTON = ImageFont.truetype(FONT_ANTON_PATH, 40)
 
 I_COLOUR_SHADOW = "black"

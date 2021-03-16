@@ -8,9 +8,9 @@ from PIL import Image
 from log import *
 
 
-PATH_CACHE_CSV_USED = "cache/used.csv"
-PATH_CACHE_CSV_UNUSED = "cache/unused.csv"
-PATH_CACHE_CSV_BAD = "cache/bad.csv"
+PATH_CACHE_CSV_USED = "./cache/used.csv"
+PATH_CACHE_CSV_UNUSED = "./cache/unused.csv"
+PATH_CACHE_CSV_BAD = "./cache/bad.csv"
 URL_REDDIT = "https://www.reddit.com/r/{}.json"
 
 USED = "used"
@@ -32,7 +32,7 @@ STATUS_OK = 200
 
 # logger
 LOG_CACHE_NAME = "cache"
-LOG_CACHE_PATH = "../logs/cache.log"
+LOG_CACHE_PATH = "./logs/cache.log"
 logger_cache = init_log(LOG_CACHE_NAME, LOG_CACHE_PATH)
 
 cache_last_update = 0

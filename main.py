@@ -20,7 +20,8 @@ URL = "url"
 
 IMAGE_WIDTH_MIN = 200
 IMAGE_WIDTH_FORCE = 500
-UPDATE_WAIT_SECONDS = 60 * 1
+UPDATE_WAIT_SECONDS_INIT = 10
+UPDATE_WAIT_SECONDS = 60 * 10
 
 # logger
 LOG_BOT_NAME = "bot"
@@ -213,9 +214,9 @@ while len(cache[UNUSED]) == 0:
     print_info(logger_bot,
                "Unused cache is empty. "
                "Reattempting cache update in {} second(s)..."
-               .format(UPDATE_WAIT_SECONDS))
-    sleep(UPDATE_WAIT_SECONDS)
-    update_cache_reddit(cache, subreddits, wait_sec=UPDATE_WAIT_SECONDS)
+               .format(UPDATE_WAIT_SECONDS_INIT))
+    sleep(UPDATE_WAIT_SECONDS_INIT)
+    update_cache_reddit(cache, subreddits)
 
 print_info(logger_bot, "Starting bot")
 client.run(args.token)
