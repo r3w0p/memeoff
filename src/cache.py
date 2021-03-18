@@ -72,18 +72,21 @@ class RedditCache:
             self,
             subreddits,
             wait_sec=-1,
+            force_if_empty=True,
             shuffle_first=True,
             stop_first_failure=False,
             cull=True,
             write=True,
             log=True):
 
-        # not enough time has passed since the last cache update
-        if (time_ns() - self.cache_last_update) / 1e+9 < wait_sec:
+        # ignore if time has not elapsed and
+        # cache is forced if empty but is not empty
+        if (time_ns() - self.cache_last_update) / 1e+9 < wait_sec and \
+                not (force_if_empty and len(self.unused) == 0):
             print_info(
                 self.logger,
-                "Wait period for cache update has not elapsed. "
-                "Ignoring update request.")
+                "Cache update ignored: {} seconds has not yet elapsed."
+                .format(wait_sec))
             return
 
         self.cache_last_update = time_ns()
