@@ -2,7 +2,7 @@ from textwrap import wrap
 from PIL import Image, ImageDraw, ImageOps
 
 
-class MemeGenerator:
+class MemeGen:
     I_COLOUR_SHADOW = "black"
     I_COLOUR_FILL = "white"
     I_OFFSET = 2
@@ -19,12 +19,12 @@ class MemeGenerator:
 
     def __init__(
             self,
-            logger_meme,
+            logger,
             font_twitter,
             font_impact) -> None:
         super().__init__()
 
-        self.logger_meme = logger_meme
+        self.logger = logger
         self.font_twitter = font_twitter
         self.font_impact = font_impact
 
@@ -34,7 +34,7 @@ class MemeGenerator:
         i_width, i_height = image.size
         text_lines = wrap(
             ' '.join(list_text),
-            width=MemeGenerator.I_WIDTH_WRAP)
+            width=MemeGen.I_WIDTH_WRAP)
 
         for i, text in enumerate(text_lines):
             t_width, t_height = draw.textsize(text, font=self.font_impact)
@@ -42,58 +42,58 @@ class MemeGenerator:
             x = (i_width - t_width) / 2
 
             if top:
-                y = (i * MemeGenerator.I_HEIGHT_FORCE)
+                y = (i * MemeGen.I_HEIGHT_FORCE)
             else:
                 y = (i_height -
-                     MemeGenerator.I_HEIGHT_FORCE -
-                     MemeGenerator.I_HEIGHT_PAD) - \
-                    (len(text_lines) - (i + 1)) *\
-                    MemeGenerator.I_HEIGHT_FORCE
+                     MemeGen.I_HEIGHT_FORCE -
+                     MemeGen.I_HEIGHT_PAD) - \
+                    (len(text_lines) - (i + 1)) * \
+                    MemeGen.I_HEIGHT_FORCE
 
             for pos in [
-                (x - MemeGenerator.I_OFFSET, y - MemeGenerator.I_OFFSET),
-                (x + MemeGenerator.I_OFFSET, y - MemeGenerator.I_OFFSET),
-                (x - MemeGenerator.I_OFFSET, y + MemeGenerator.I_OFFSET),
-                (x + MemeGenerator.I_OFFSET, y + MemeGenerator.I_OFFSET)
+                (x - MemeGen.I_OFFSET, y - MemeGen.I_OFFSET),
+                (x + MemeGen.I_OFFSET, y - MemeGen.I_OFFSET),
+                (x - MemeGen.I_OFFSET, y + MemeGen.I_OFFSET),
+                (x + MemeGen.I_OFFSET, y + MemeGen.I_OFFSET)
             ]:
                 draw.text(pos,
                           text,
                           font=self.font_impact,
-                          fill=MemeGenerator.I_COLOUR_SHADOW)
+                          fill=MemeGen.I_COLOUR_SHADOW)
 
             draw.text((x, y),
                       text,
                       font=self.font_impact,
-                      fill=MemeGenerator.I_COLOUR_FILL)
+                      fill=MemeGen.I_COLOUR_FILL)
 
         return image
 
     def apply_format_twitter(self, image, list_text):
         text_lines = wrap(
             ' '.join(list_text),
-            width=MemeGenerator.T_WIDTH_WRAP)
-        image = MemeGenerator._add_corners(image, MemeGenerator.T_RADIUS)
+            width=MemeGen.T_WIDTH_WRAP)
+        image = MemeGen._add_corners(image, MemeGen.T_RADIUS)
 
-        top = (MemeGenerator.T_PAD * 2) + \
+        top = (MemeGen.T_PAD * 2) + \
               (len(text_lines) *
-               MemeGenerator.T_HEIGHT_FORCE)
+               MemeGen.T_HEIGHT_FORCE)
 
-        border = (MemeGenerator.T_PAD,
+        border = (MemeGen.T_PAD,
                   top,
-                  MemeGenerator.T_PAD,
-                  MemeGenerator.T_PAD)
+                  MemeGen.T_PAD,
+                  MemeGen.T_PAD)
 
         image = ImageOps.expand(image, border=border, fill='white')
         draw = ImageDraw.Draw(image)
 
         for i, text in enumerate(text_lines):
-            x = MemeGenerator.T_PAD
-            y = MemeGenerator.T_PAD + (i * MemeGenerator.T_HEIGHT_FORCE)
+            x = MemeGen.T_PAD
+            y = MemeGen.T_PAD + (i * MemeGen.T_HEIGHT_FORCE)
 
             draw.text((x, y),
                       text,
                       font=self.font_twitter,
-                      fill=MemeGenerator.T_COLOUR_FILL)
+                      fill=MemeGen.T_COLOUR_FILL)
 
         return image
 
@@ -101,11 +101,11 @@ class MemeGenerator:
     def _add_corners(image, radius):
         # Adapted from: https://stackoverflow.com/a/11291419
 
-        # Temporarily double image size so that corners appear smoother when
-        # returned back to its original size
+        # Temporarily double image size so that corners appear smoother
+        # when returned back to its original size
         w_orig, h_orig = image.size
-        image = image.resize((w_orig * MemeGenerator.T_RADIUS_MULTIPLY,
-                              h_orig * MemeGenerator.T_RADIUS_MULTIPLY))
+        image = image.resize((w_orig * MemeGen.T_RADIUS_MULTIPLY,
+                              h_orig * MemeGen.T_RADIUS_MULTIPLY))
         w, h = image.size
 
         # Add corners

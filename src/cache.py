@@ -5,7 +5,7 @@ from math import floor
 from random import shuffle, choice
 from slugify import slugify
 from PIL import Image
-from log import *
+from src.log import *
 
 
 class ImageTooSmallException(Exception):
@@ -50,19 +50,20 @@ class RedditCache:
 
     def __init__(
             self,
-            logger_cache,
+            logger,
             path_unused,
             path_used,
             path_bad) -> None:
         super().__init__()
 
-        self.logger_cache = logger_cache
+        self.logger = logger
 
         self.path_unused = path_unused
         self.path_used = path_used
         self.path_bad = path_bad
 
-        self.cache = self._read_cache()
+        self._read_cache()
+
         self.cache_last_update = 0
 
     def update_cache(
@@ -77,7 +78,7 @@ class RedditCache:
         # not enough time has passed since the last cache update
         if (time_ns() - self.cache_last_update) / 1e+9 < wait_sec:
             print_info(
-                self.logger_cache,
+                self.logger,
                 "Wait period for cache update has not elapsed. "
                 "Ignoring update request.")
             return
@@ -93,24 +94,27 @@ class RedditCache:
                 self._scrape_subreddit_image_urls(subreddit)
 
             print_info(
-                self.logger_cache,
-                "Scraped from subreddit {} (status code {})"
-                .format(subreddit, status_code))
+                self.logger,
+                "Subreddit {}: {} (status={})"
+                .format(subreddit,
+                        "SUCCESS" if status_code == RedditCache.STATUS_OK
+                        else "FAILURE",
+                        status_code))
 
             if status_code == RedditCache.STATUS_OK:
                 timestamp = time_ns()
 
                 for image_url in list_urls:
                     # ignore if bad url
-                    if image_url in self.cache[RedditCache.BAD]:
+                    if image_url in self.bad:
                         continue
 
                     # ignore if already used
-                    if image_url in self.cache[RedditCache.USED]:
+                    if image_url in self.used:
                         continue
 
                     # store timestamp of download with url
-                    self.cache[RedditCache.UNUSED][image_url] = timestamp
+                    self.unused[image_url] = timestamp
 
             elif stop_first_failure:
                 break
@@ -119,7 +123,7 @@ class RedditCache:
             self._write_cache()
 
         if log:
-            self._print_info_cache()
+            self.print_info_cache()
 
     def download_random_image(
             self,
@@ -127,12 +131,12 @@ class RedditCache:
             force_width=0,
             attempts=1):
 
-        if len(self.cache[RedditCache.UNUSED]) > 0:
+        if len(self.unused) > 0:
             # select from unused cache, if any
-            cache_key = self.UNUSED
-        elif len(self.cache[RedditCache.USED]) > 0:
+            cache_download = self.unused
+        elif len(self.used) > 0:
             # select from used cache, if unused is empty
-            cache_key = self.USED
+            cache_download = self.used
         else:
             # caches are empty
             raise RandomCacheDownloadException()
@@ -144,7 +148,7 @@ class RedditCache:
 
         while (image is None and image_fname is None) and attempt < attempts:
             attempt += 1
-            random_image_url = choice(list(self.cache[cache_key].keys()))
+            random_image_url = choice(list(cache_download.keys()))
 
             try:
                 image, image_fname = self.download_image(
@@ -152,18 +156,18 @@ class RedditCache:
 
             except Exception as e:
                 print_info(
-                    self.logger_cache,
+                    self.logger,
                     "Random image download failed (attempt {}/{}): {}, {}"
                     .format(attempt, attempts, random_image_url, e))
 
                 # unsuccessful image url is moved to bad cache
-                self.cache[cache_key].pop(random_image_url, None)
-                self.cache[RedditCache.BAD][random_image_url] = time_ns()
+                cache_download.pop(random_image_url, None)
+                self.bad[random_image_url] = time_ns()
 
             # successful image url is moved to used cache if from unused cache
-            if cache_key == RedditCache.UNUSED:
-                self.cache[RedditCache.UNUSED].pop(random_image_url, None)
-                self.cache[RedditCache.USED][random_image_url] = time_ns()
+            if cache_download == self.unused:
+                self.unused.pop(random_image_url, None)
+                self.used[random_image_url] = time_ns()
 
         if image is None or image_fname is None:
             raise RandomCacheDownloadException()
@@ -175,29 +179,22 @@ class RedditCache:
             raise InvalidImageURLException()
 
         try:
-            print_info(
-                self.logger_cache,
-                "Downloading image: {}".format(image_url))
-
             image_response = requests.get(image_url, stream=True).raw
 
-        except Exception as e:  # todo catch more specific exceptions
+        except Exception as e:
             print_info(
-                self.logger_cache,
+                self.logger,
                 "Exception when downloading image {}: {}"
                 .format(image_url, e))
 
             raise ImageDownloadException()
 
         try:
-            print_info(self.logger_cache,
-                       "Opening downloaded image: {}".format(image_url))
-
             image = Image.open(image_response)
 
-        except Exception as e:  # todo catch more specific exceptions
+        except Exception as e:
             print_info(
-                self.logger_cache,
+                self.logger,
                 "Exception when opening downloaded image {}: {}"
                 .format(image_url, e))
 
@@ -268,23 +265,20 @@ class RedditCache:
             file_format
         )
 
-    def _read_cache(self, log=True) -> dict:
-        cache = {
-            RedditCache.UNUSED:
-                RedditCache._read_cache_file(self.path_unused),
-            RedditCache.USED:
-                RedditCache._read_cache_file(self.path_used),
-            RedditCache.BAD:
-                RedditCache._read_cache_file(self.path_bad)
-        }
+    def _read_cache(self) -> None:
+        self.unused = RedditCache._read_cache_file(self.path_unused)
+        self.used = RedditCache._read_cache_file(self.path_used)
+        self.bad = RedditCache._read_cache_file(self.path_bad)
 
-        if log:
-            self._print_info_cache()
-
-        return cache
+    def _write_cache(self) -> None:
+        RedditCache._write_cache_file(self.unused, self.path_unused)
+        RedditCache._write_cache_file(self.used, self.path_used)
+        RedditCache._write_cache_file(self.bad, self.path_bad)
 
     @staticmethod
     def _read_cache_file(path_file, delimiter=',') -> dict:
+        file_touch(path_file)
+
         d = {}
         with open(path_file, 'r') as csv_file:
             for row in csv.reader(csv_file, delimiter=delimiter):
@@ -297,27 +291,21 @@ class RedditCache:
                     d[row[0]] = row[1]
         return d
 
-    def _write_cache(self) -> None:
-        RedditCache._write_cache_file(
-            self.cache, RedditCache.UNUSED, self.path_unused)
-        RedditCache._write_cache_file(
-            self.cache, RedditCache.USED, self.path_used)
-        RedditCache._write_cache_file(
-            self.cache, RedditCache.BAD, self.path_bad)
-
     @staticmethod
-    def _write_cache_file(cache, cache_key, path_file, delimiter=',') -> None:
-        with open(path_file, mode='w') as csv_file:
+    def _write_cache_file(cache, path_cache, delimiter=',') -> None:
+        file_touch(path_cache)
+
+        with open(path_cache, mode='w', newline='') as csv_file:
             writer = csv.writer(csv_file, delimiter=delimiter)
 
-            for url, timestamp in cache[cache_key].items():
+            for url, timestamp in cache.items():
                 writer.writerow([url, timestamp])
 
-    def _print_info_cache(self):
+    def print_info_cache(self):
         print_info(
-            self.logger_cache,
-            "Current cache: unused={}, used={}, bad={}".format(
-                len(self.cache[RedditCache.UNUSED]),
-                len(self.cache[RedditCache.USED]),
-                len(self.cache[RedditCache.BAD]))
+            self.logger,
+            "Cache: unused={}, used={}, bad={}".format(
+                len(self.unused),
+                len(self.used),
+                len(self.bad))
         )

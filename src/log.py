@@ -1,10 +1,11 @@
 import logging
-from tools import *
+from src.tools import *
 
 
 def init_log(name_log, path_log, level=logging.INFO):
     logger = logging.getLogger(name_log)
     logger.setLevel(level)
+
     file_touch(path_log)
 
     handler = logging.FileHandler(
