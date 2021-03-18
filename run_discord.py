@@ -52,6 +52,7 @@ SYM_M_LEN = len(SYM_M)
 UPDATE_WAIT_SECONDS_INIT = 10
 UPDATE_WAIT_SECONDS = 60 * 10
 MAX_RANDOM_DOWNLOAD_ATTEMPTS = 3
+CACHE_SIZE_LIMIT = 10000
 
 # memegen
 IMAGE_WIDTH_MIN = 200
@@ -256,7 +257,8 @@ cache = RedditCache(
     logger=logger_cache,
     path_unused=PATH_CACHE_UNUSED,
     path_used=PATH_CACHE_USED,
-    path_bad=PATH_CACHE_BAD
+    path_bad=PATH_CACHE_BAD,
+    cache_size_limit=CACHE_SIZE_LIMIT
 )
 
 if len(cache.unused) == 0:

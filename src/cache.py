@@ -2,10 +2,11 @@ import requests
 import csv
 from time import time_ns
 from math import floor
-from random import shuffle, choice
+from random import shuffle, choice, sample
 from slugify import slugify
 from PIL import Image
 from src.log import *
+from pprint import pprint
 
 
 class ImageTooSmallException(Exception):
@@ -53,14 +54,15 @@ class RedditCache:
             logger,
             path_unused,
             path_used,
-            path_bad) -> None:
+            path_bad,
+            cache_size_limit) -> None:
         super().__init__()
 
         self.logger = logger
-
         self.path_unused = path_unused
         self.path_used = path_used
         self.path_bad = path_bad
+        self.cache_size_limit = cache_size_limit
 
         self._read_cache()
 
@@ -72,6 +74,7 @@ class RedditCache:
             wait_sec=-1,
             shuffle_first=True,
             stop_first_failure=False,
+            cull=True,
             write=True,
             log=True):
 
@@ -118,6 +121,19 @@ class RedditCache:
 
             elif stop_first_failure:
                 break
+
+        if cull:
+            for cache in [self.unused, self.used, self.bad]:
+                cache_keys = cache.keys()
+                cache_keys_len = len(cache_keys)
+
+                if cache_keys_len > self.cache_size_limit:
+                    keys_cull = sample(
+                        cache_keys,
+                        cache_keys_len - self.cache_size_limit)
+
+                    for key in keys_cull:
+                        cache.pop(key, None)
 
         if write:
             self._write_cache()
