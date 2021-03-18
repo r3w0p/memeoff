@@ -11,7 +11,7 @@ def file_touch(path_file) -> None:
     p.touch()
 
 
-def index_first(lst, val, default=-1):
+def index_or_default(lst, val, default=-1):
     return lst.index(val) if val in lst else default
 
 

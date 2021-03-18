@@ -2,13 +2,43 @@ import discord
 import argparse
 from io import BytesIO
 from time import sleep
-from subreddits import *
-from meme import *
-from cache import *
-from pprint import pprint
+from PIL import ImageFont
+from src.subreddits import *
+from src.meme import *
+from src.cache import *
 
+# arguments
+parser = argparse.ArgumentParser()
+parser.add_argument('-token', type=str)
+args = parser.parse_args()
 
-# constants
+# directories
+DIR_FILE = Path(__file__).parent.absolute()
+DIR_CACHE = "cache"
+DIR_CONFIG = "config"
+DIR_FONTS = "fonts"
+DIR_LOGS = "logs"
+DIR_SRC = "src"
+
+# paths
+PATH_CACHE_UNUSED = DIR_FILE / DIR_CACHE / "unused.csv"
+PATH_CACHE_USED = DIR_FILE / DIR_CACHE / "used.csv"
+PATH_CACHE_BAD = DIR_FILE / DIR_CACHE / "bad.csv"
+
+PATH_CONFIG_SUBREDDIT = DIR_FILE / "subreddits.txt"
+
+PATH_FONTS_IMPACT = DIR_FILE / DIR_CONFIG / DIR_FONTS / \
+                     "Anton" / "Anton-Regular.ttf"
+PATH_FONTS_TWITTER = DIR_FILE / DIR_CONFIG / DIR_FONTS / \
+                     "Arimo" / "Arimo-Regular.ttf"
+
+PATH_LOGS_RUN_DISCORD = DIR_FILE / DIR_LOGS / "run_discord.log"
+PATH_LOGS_DISCORD = DIR_FILE / DIR_LOGS / "discord.log"
+PATH_LOGS_CACHE = DIR_FILE / DIR_LOGS / "cache.log"
+PATH_LOGS_MEME = DIR_FILE / DIR_LOGS / "meme.log"
+PATH_LOGS_SUBREDDITS = DIR_FILE / DIR_LOGS / "subreddits.log"
+
+# commands
 SYM_M = "-M"
 SYM_T = "-T"
 SYM_IT = "-IT"
@@ -16,26 +46,23 @@ SYM_IB = "-IB"
 SYM_URL = "-URL"
 SYM_CHECK = [SYM_T, SYM_IT, SYM_IB, SYM_URL]
 
-URL = "url"
-
-IMAGE_WIDTH_MIN = 200
-IMAGE_WIDTH_FORCE = 500
+# cache
 UPDATE_WAIT_SECONDS_INIT = 10
 UPDATE_WAIT_SECONDS = 60 * 10
 
+# meme
+IMAGE_WIDTH_MIN = 200
+IMAGE_WIDTH_FORCE = 500
+
+FONT_IMPACT = ImageFont.truetype(PATH_FONTS_IMPACT, 40)
+FONT_TWITTER = ImageFont.truetype(PATH_FONTS_TWITTER, 36)
+
 # logger
-LOG_BOT_NAME = "bot"
-LOG_BOT_PATH = "./logs/bot.log"
-logger_bot = init_log(LOG_BOT_NAME, LOG_BOT_PATH)
-
-LOG_DISCORD_NAME = "discord"
-LOG_DISCORD_PATH = "./logs/discord.log"
-logger_discord = init_log(LOG_DISCORD_NAME, LOG_DISCORD_PATH)
-
-# arguments
-parser = argparse.ArgumentParser()
-parser.add_argument('-token', type=str)
-args = parser.parse_args()
+logger_run_discord = init_log("run_discord", PATH_LOGS_RUN_DISCORD)
+logger_discord = init_log("discord", PATH_LOGS_DISCORD)
+logger_cache = init_log("cache", PATH_LOGS_CACHE)
+logger_meme = init_log("meme", PATH_LOGS_MEME)
+logger_subreddits = init_log("subreddits", PATH_LOGS_SUBREDDITS)
 
 # discord
 client = discord.Client()
@@ -45,7 +72,7 @@ def parse_message_content(content, sym_start, sym_check):
     cs = content.split(' ')
     csu = content.upper().split()
     sym_all = [sym_start] + sym_check
-    positions = [(index_first(csu, sym), sym) for sym in sym_all]
+    positions = [(index_or_default(csu, sym), sym) for sym in sym_all]
 
     if not (positions[0][0] == 0 and positions[0][1] == sym_start):
         return None  # message is not for the bot
@@ -76,7 +103,7 @@ def parse_message_content(content, sym_start, sym_check):
 def extract_image(message, commands):
     # Attachment
     if len(message.attachments) > 0:
-        print_info(logger_bot, "{}: attachment {}"
+        print_info(logger_run_discord, "{}: attachment {}"
                    .format(message.author, message.attachments[0].url))
 
         return download_image(
@@ -86,7 +113,7 @@ def extract_image(message, commands):
 
     # Custom URL
     elif SYM_URL in commands and len(commands[SYM_URL]) > 0:
-        print_info(logger_bot, "{}: custom url {}"
+        print_info(logger_run_discord, "{}: custom url {}"
                    .format(message.author, commands[SYM_URL][0]))
 
         return download_image(
@@ -96,7 +123,7 @@ def extract_image(message, commands):
 
     # Random Image
     else:
-        print_info(logger_bot, "{}: random image".format(message.author))
+        print_info(logger_run_discord, "{}: random image".format(message.author))
 
         return download_random_image(
             cache=cache,
@@ -107,7 +134,7 @@ def extract_image(message, commands):
 
 @client.event
 async def on_ready():
-    print_info(logger_bot, "Logged in as {}".format(client.user))
+    print_info(logger_run_discord, "Logged in as {}".format(client.user))
 
 
 @client.event
@@ -200,23 +227,33 @@ async def on_message(message):
         update_cache_reddit(cache, subreddits, wait_sec=UPDATE_WAIT_SECONDS)
 
 
-print_info(logger_bot, "Init subreddits")
-subreddits = init_subreddits()
+# todo remove
 
-print_info(logger_bot, "Init cache")
+print(PATH_LOGS_RUN_DISCORD)
+print(PATH_LOGS_DISCORD)
+
+exit(0)
+# todo remove
+
+print_info(logger_run_discord, "Init subreddits")
+subreddits = init_subreddits(
+    logger=logger_subreddits,
+    path_subreddits=PATH_CONFIG_SUBREDDIT)
+
+print_info(logger_run_discord, "Init cache")
 cache = init_cache()
 
-print_info(logger_bot, "Updating cache")
+print_info(logger_run_discord, "Updating cache")
 update_cache_reddit(cache, subreddits)
 
 # ensure unused cache is not empty before starting
 while len(cache[UNUSED]) == 0:
-    print_info(logger_bot,
-               "Unused cache is empty. "
-               "Reattempting cache update in {} second(s)..."
+    print_info(logger_run_discord,
+               "Cache update failed. "
+               "Reattempting in {} second(s)..."
                .format(UPDATE_WAIT_SECONDS_INIT))
     sleep(UPDATE_WAIT_SECONDS_INIT)
     update_cache_reddit(cache, subreddits)
 
-print_info(logger_bot, "Starting bot")
+print_info(logger_run_discord, "Starting bot")
 client.run(args.token)
