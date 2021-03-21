@@ -34,7 +34,7 @@ PATH_FONTS_TWITTER = DIR_FILE / DIR_CONFIG / DIR_FONTS / \
 PATH_FONTS_DEMOT_TITLE = DIR_FILE / DIR_CONFIG / DIR_FONTS / \
                      "Scheherazade" / "Scheherazade-Regular.ttf"
 PATH_FONTS_DEMOT_SUBTITLE = DIR_FILE / DIR_CONFIG / DIR_FONTS / \
-                     "OpenSans" / "OpenSans-Regular.ttf"
+                     "OpenSans" / "OpenSans-SemiBold.ttf"
 
 PATH_LOGS_RUN_DISCORD = DIR_FILE / DIR_LOGS / "run_discord.log"
 PATH_LOGS_DISCORD = DIR_FILE / DIR_LOGS / "discord.log"
@@ -66,8 +66,8 @@ IMAGE_WIDTH_FORCE = 500
 
 FONT_TWITTER = ImageFont.truetype(str(PATH_FONTS_TWITTER), 36)
 FONT_IMPACT = ImageFont.truetype(str(PATH_FONTS_IMPACT), 40)
-FONT_DEMOT_TITLE = ImageFont.truetype(str(PATH_FONTS_DEMOT_TITLE), 56)
-FONT_DEMOT_SUBTITLE = ImageFont.truetype(str(PATH_FONTS_DEMOT_SUBTITLE), 15)
+FONT_DEMOT_TITLE = ImageFont.truetype(str(PATH_FONTS_DEMOT_TITLE), 70)
+FONT_DEMOT_SUBTITLE = ImageFont.truetype(str(PATH_FONTS_DEMOT_SUBTITLE), 18)
 
 
 # logger
@@ -278,14 +278,6 @@ cache = RedditCache(
     path_bad=PATH_CACHE_BAD,
     cache_size_limit=CACHE_SIZE_LIMIT
 )
-
-image, image_url = cache.download_image("https://raw.githubusercontent.com/r3w0p/memeoff/master/examples/impostor/image.png")
-memegen.apply_format_demotivational(
-    image=image,
-    list_title="WHEN THE IMPOSTER".split(' '),
-    list_subtitle="is sus".split(' '))
-
-exit(0)  # todo
 
 if len(cache.unused) == 0:
     print_info(logger_run_discord, "Updating empty cache")

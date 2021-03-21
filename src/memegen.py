@@ -15,8 +15,8 @@ class MemeGen:
     T_RADIUS_MULTIPLY = 3
 
     D_PAD = 3
-    DT_HEIGHT_FORCE = 42
-    DS_HEIGHT_FORCE = 18
+    DT_HEIGHT_FORCE = 50
+    DS_HEIGHT_FORCE = 24
 
     def __init__(
             self,
@@ -38,7 +38,7 @@ class MemeGen:
 
         i_width, i_height = image.size
         text_lines = wrap(
-            ' '.join(list_text),
+            ' '.join(list_text).upper(),
             width=MemeGen.I_WIDTH_WRAP)
 
         for i, text in enumerate(text_lines):
@@ -127,18 +127,50 @@ class MemeGen:
 
         return image
 
-    def apply_format_demotivational(self, image, list_title, list_subtitle):
-        border_init = \
+    def apply_format_demotivational(
+            self, image, list_title=None, list_subtitle=None):
+        border_inner = \
             (MemeGen.D_PAD, MemeGen.D_PAD, MemeGen.D_PAD, MemeGen.D_PAD)
 
-        image = ImageOps.expand(image, border=border_init, fill='black')
-        image = ImageOps.expand(image, border=border_init, fill='white')
-        image = ImageOps.expand(image, border=(80, 50, 80, 6), fill='black')
+        border_outer = (80, 50, 80, 0)
 
-        # title
+        image = ImageOps.expand(image, border=border_inner, fill='black')
+        image = ImageOps.expand(image, border=border_inner, fill='white')
+        image = ImageOps.expand(image, border=border_outer, fill='black')
+
+        if list_title is None and list_subtitle is None:
+            image = ImageOps.expand(
+                image,
+                border=(0, 0, 0, 50),
+                fill='black')
+
+        else:
+            if list_title is not None:
+                image = ImageOps.expand(
+                    image, border=(0, 0, 0, 8), fill='black')
+
+                image = self._add_demotivational_title(image, list_title)
+
+            if list_subtitle is not None:
+                image = ImageOps.expand(
+                    image,
+                    border=(0, 0, 0, 20 if list_title is None else 15),
+                    fill='black')
+
+                image = self._add_demotivational_subtitle(image, list_subtitle)
+
+            else:
+                image = ImageOps.expand(
+                    image,
+                    border=(0, 0, 0, 15),
+                    fill='black')
+
+        return image
+
+    def _add_demotivational_title(self, image, list_title):
         dt_width, dt_height = image.size
 
-        title_lines = wrap(' '.join(list_title), width=18)
+        title_lines = wrap(' '.join(list_title).upper(), width=22)
         title_bottom = len(title_lines) * MemeGen.DT_HEIGHT_FORCE
 
         image = ImageOps.expand(
@@ -163,12 +195,12 @@ class MemeGen:
                 font=self.font_demot_title,
                 fill="white")
 
-        image = ImageOps.expand(image, border=(0, 0, 0, 10), fill='black')
+        return image
 
-        # subtitle
+    def _add_demotivational_subtitle(self, image, list_subtitle):
         ds_width, ds_height = image.size
 
-        subtitle_lines = wrap(' '.join(list_subtitle), width=70)
+        subtitle_lines = wrap(' '.join(list_subtitle), width=74)
         subtitle_bottom = len(subtitle_lines) * MemeGen.DS_HEIGHT_FORCE
 
         image = ImageOps.expand(
@@ -193,6 +225,4 @@ class MemeGen:
                 font=self.font_demot_subtitle,
                 fill="white")
 
-        image = ImageOps.expand(image, border=(0, 0, 0, 6), fill='black')
-
-        image.show()
+        return image
