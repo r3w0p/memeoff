@@ -31,6 +31,10 @@ PATH_FONTS_IMPACT = DIR_FILE / DIR_CONFIG / DIR_FONTS / \
                      "Anton" / "Anton-Regular.ttf"
 PATH_FONTS_TWITTER = DIR_FILE / DIR_CONFIG / DIR_FONTS / \
                      "Arimo" / "Arimo-Regular.ttf"
+PATH_FONTS_DEMOT_TITLE = DIR_FILE / DIR_CONFIG / DIR_FONTS / \
+                     "Scheherazade" / "Scheherazade-Regular.ttf"
+PATH_FONTS_DEMOT_SUBTITLE = DIR_FILE / DIR_CONFIG / DIR_FONTS / \
+                     "OpenSans" / "OpenSans-SemiBold.ttf"
 
 PATH_LOGS_RUN_DISCORD = DIR_FILE / DIR_LOGS / "run_discord.log"
 PATH_LOGS_DISCORD = DIR_FILE / DIR_LOGS / "discord.log"
@@ -40,12 +44,14 @@ PATH_LOGS_SUBREDDITS = DIR_FILE / DIR_LOGS / "subreddits.log"
 
 # commands
 SYM_M = "-M"
-SYM_T = "-T"
 SYM_IT = "-IT"
 SYM_IB = "-IB"
+SYM_T = "-T"
+SYM_DT = "-DT"
+SYM_DS = "-DS"
 SYM_URL = "-URL"
 
-SYM_CHECK = [SYM_T, SYM_IT, SYM_IB, SYM_URL]
+SYM_CHECK = [SYM_IT, SYM_IB, SYM_T, SYM_DT, SYM_DS, SYM_URL]
 SYM_M_LEN = len(SYM_M)
 
 # cache
@@ -58,8 +64,11 @@ CACHE_SIZE_LIMIT = 1000
 IMAGE_WIDTH_MIN = 200
 IMAGE_WIDTH_FORCE = 500
 
-FONT_IMPACT = ImageFont.truetype(str(PATH_FONTS_IMPACT), 40)
 FONT_TWITTER = ImageFont.truetype(str(PATH_FONTS_TWITTER), 36)
+FONT_IMPACT = ImageFont.truetype(str(PATH_FONTS_IMPACT), 40)
+FONT_DEMOT_TITLE = ImageFont.truetype(str(PATH_FONTS_DEMOT_TITLE), 70)
+FONT_DEMOT_SUBTITLE = ImageFont.truetype(str(PATH_FONTS_DEMOT_SUBTITLE), 18)
+
 
 # logger
 logger_run_discord = init_log("run_discord", PATH_LOGS_RUN_DISCORD)
@@ -221,6 +230,13 @@ async def on_message(message):
             image = memegen.apply_format_twitter(
                 image, commands[SYM_T])
 
+        # demotivational format
+        if SYM_DT in commands or SYM_DS in commands:
+            image = memegen.apply_format_demotivational(
+                image,
+                commands[SYM_DT] if SYM_DT in commands else None,
+                commands[SYM_DS] if SYM_DS in commands else None)
+
         # send to discord
         with BytesIO() as image_binary:
             image_format = image_fname[image_fname.rfind('.') + 1:]
@@ -248,7 +264,9 @@ print_info(logger_run_discord, "Init memegen")
 memegen = MemeGen(
     logger=logger_memegen,
     font_twitter=FONT_TWITTER,
-    font_impact=FONT_IMPACT
+    font_impact=FONT_IMPACT,
+    font_demot_title=FONT_DEMOT_TITLE,
+    font_demot_subtitle=FONT_DEMOT_SUBTITLE
 )
 
 

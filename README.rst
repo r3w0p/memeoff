@@ -1,16 +1,3 @@
-.. |ss| raw:: html
-
-   <strike>
-
-.. |se| raw:: html
-
-   </strike>
-
-.. image:: https://raw.githubusercontent.com/r3w0p/memeoff/master/config/images/logo/400.png
-   :alt: Memeoff
-
-|
-
 .. image:: https://img.shields.io/github/v/tag/r3w0p/memeoff.svg
    :target: https://github.com/r3w0p/memeoff/tags
    :alt: Tag
@@ -37,7 +24,7 @@
 
 |
 
-A Discord bot for fast meme creation |ss| and meme battling with friends |se|.
+A Discord bot for fast meme creation.
 
 This software is a **work in progress**.
 All aspects of the software are subject to change `until v1.0 <https://github.com/r3w0p/memeoff/projects/1>`_.
