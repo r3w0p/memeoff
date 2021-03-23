@@ -81,7 +81,8 @@ logger_subreddits = init_log("subreddits", PATH_LOGS_SUBREDDITS)
 client = discord.Client()
 
 
-def parse_message_content(message, sym_start, sym_check):
+def parse_message(message, sym_start, sym_check):
+
     content = message.content \
         .replace('\n', ' ') \
         .replace('\t', ' ') \
@@ -123,18 +124,27 @@ def parse_message_content(message, sym_start, sym_check):
 def extract_image(message, commands):
     # Attachment
     if len(message.attachments) > 0:
-        print_info(logger_run_discord,
-                   "Attachment: {}".format(message.attachments[0].url))
+        print_info(logger_run_discord, "Attachment")
 
         return cache.download_image(
             image_url=message.attachments[0].url,
             min_width=IMAGE_WIDTH_MIN,
             force_width=IMAGE_WIDTH_FORCE)
 
+    # Reply Attachment
+    elif message.reference is not None and \
+            message.reference.resolved is not None and \
+            len(message.reference.resolved.attachments) > 0:
+        print_info(logger_run_discord, "Reply Attachment")
+
+        return cache.download_image(
+            image_url=message.reference.resolved.attachments[0].url,
+            min_width=IMAGE_WIDTH_MIN,
+            force_width=IMAGE_WIDTH_FORCE)
+
     # Custom URL
     elif SYM_URL in commands and len(commands[SYM_URL]) > 0:
-        print_info(logger_run_discord,
-                   "Custom URL: {}".format(commands[SYM_URL][0]))
+        print_info(logger_run_discord, "Custom URL")
 
         return cache.download_image(
             image_url=commands[SYM_URL][0],
@@ -161,7 +171,7 @@ async def on_message(message):
     if message.author == client.user:
         return
 
-    commands = parse_message_content(message, SYM_M, SYM_CHECK)
+    commands = parse_message(message, SYM_M, SYM_CHECK)
 
     if commands is not None:
         try:
