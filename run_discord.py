@@ -257,7 +257,7 @@ async def on_message(message):
                 message.author.mention,
                 file=discord.File(
                     fp=image_binary,
-                    filename='{}_{}'.format(time_ns(), image_fname)
+                    filename='{}_{}'.format(time_ns(), image_fname.lower())
                 )
             )
 
