@@ -1,3 +1,9 @@
+.. image:: https://raw.githubusercontent.com/r3w0p/memeoff/master/config/images/logo/400.png
+   :target: https://github.com/r3w0p/memeoff
+   :alt: memeoff
+
+|
+
 .. image:: https://img.shields.io/github/v/tag/r3w0p/memeoff.svg
    :target: https://github.com/r3w0p/memeoff/tags
    :alt: Tag
