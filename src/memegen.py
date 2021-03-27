@@ -4,11 +4,11 @@ from PIL import Image, ImageDraw, ImageOps
 
 class MemeGen:
     I_OFFSET = 2
-    I_WIDTH_WRAP = 26
+    I_WORD_WRAP = 26
     I_HEIGHT_PAD = 15
     I_HEIGHT_FORCE = 45
 
-    T_WIDTH_WRAP = 28
+    T_WORD_WRAP = 31
     T_HEIGHT_FORCE = 45
     T_PAD = 15
     T_RADIUS = 60
@@ -39,7 +39,7 @@ class MemeGen:
         i_width, i_height = image.size
         text_lines = wrap(
             ' '.join(list_text).upper(),
-            width=MemeGen.I_WIDTH_WRAP)
+            width=MemeGen.I_WORD_WRAP)
 
         for i, text in enumerate(text_lines):
             t_width, t_height = draw.textsize(text, font=self.font_impact)
@@ -70,7 +70,7 @@ class MemeGen:
     def apply_format_twitter(self, image, list_text):
         text_lines = wrap(
             ' '.join(list_text),
-            width=MemeGen.T_WIDTH_WRAP)
+            width=MemeGen.T_WORD_WRAP)
         image = MemeGen._add_corners(image, MemeGen.T_RADIUS)
 
         top = (MemeGen.T_PAD * 2) + \
