@@ -42,17 +42,23 @@ PATH_LOGS_CACHE = DIR_FILE / DIR_LOGS / "cache.log"
 PATH_LOGS_MEMEGEN = DIR_FILE / DIR_LOGS / "memegen.log"
 PATH_LOGS_SUBREDDITS = DIR_FILE / DIR_LOGS / "subreddits.log"
 
-# commands
+# controls
 SYM_M = "-M"
+SYM_URL = "-URL"
+
+# formats
 SYM_IT = "-IT"
 SYM_IB = "-IB"
 SYM_T = "-T"
 SYM_DT = "-DT"
 SYM_DS = "-DS"
-SYM_URL = "-URL"
 
-SYM_CHECK = [SYM_IT, SYM_IB, SYM_T, SYM_DT, SYM_DS, SYM_URL]
+# arguments
+SYM_ARG_PING = "PING"
+
+# misc
 SYM_M_LEN = len(SYM_M)
+SYM_CHECK = [SYM_IT, SYM_IB, SYM_T, SYM_DT, SYM_DS, SYM_URL]
 
 # cache
 UPDATE_WAIT_SECONDS_INIT = 10
@@ -82,7 +88,6 @@ client = discord.Client()
 
 
 def parse_message(message, sym_start, sym_check):
-
     content = message.content \
         .replace('\n', ' ') \
         .replace('\t', ' ') \
@@ -116,7 +121,10 @@ def parse_message(message, sym_start, sym_check):
         else:
             next_pos = cs_len
 
-        commands[cmd] = [cs[i] for i in range(pos + 1, next_pos)]
+        commands[cmd] = [
+            cs[i] if cmd != sym_start else csu[i]
+            for i in range(pos + 1, next_pos)
+        ]
 
     return commands
 
@@ -174,94 +182,96 @@ async def on_message(message):
     commands = parse_message(message, SYM_M, SYM_CHECK)
 
     if commands is not None:
+        image = None
+        image_fname = None
+        error_message = None
+
         try:
-            image, image_fname = extract_image(message, commands)
+            if SYM_ARG_PING in commands[SYM_M]:
+                await message.channel.send(
+                    "{} Pong.".format(message.author.mention))
 
-        except InvalidImageURLException:
-            await message.channel.send(
-                "{} The image provided is invalid. "
-                "It must be a JPEG or PNG image."
-                .format(message.author.mention)
-            )
-            return
+            else:
+                image, image_fname = extract_image(message, commands)
 
-        except ImageDownloadException:
-            await message.channel.send(
-                "{} Unable to download the image provided."
-                .format(message.author.mention)
-            )
-            return
-
-        except ImageLoadException:
-            await message.channel.send(
-                "{} Unable to open the image provided."
-                .format(message.author.mention)
-            )
-            return
-
-        except ImageTooSmallException:
-            await message.channel.send(
-                "{} The image provided is too small. "
-                "Images must have a width of at least {}px."
-                .format(message.author.mention, IMAGE_WIDTH_MIN)
-            )
-            return
-
-        except RandomCacheDownloadException:
-            await message.channel.send(
-                "{} Failed to download random image. "
-                "Please try again."
-                .format(message.author.mention)
-            )
-            return
-
-        except Exception:
-            await message.channel.send(
-                "{} An unknown problem occurred. "
-                "Please try again."
-                .format(message.author.mention)
-            )
-            return
-
-        finally:
             await message.delete()
 
-        # impact format
-        if SYM_IT in commands:
-            image = memegen.apply_format_impact(
-                image, commands[SYM_IT], True)
+        except InvalidImageURLException:
+            error_message = \
+                "{} The image provided is of an invalid image type." \
+                .format(message.author.mention)
 
-        if SYM_IB in commands:
-            image = memegen.apply_format_impact(
-                image, commands[SYM_IB], False)
+        except ImageDownloadException:
+            error_message = \
+                "{} Unable to download the image provided." \
+                .format(message.author.mention)
 
-        # twitter format
-        if SYM_T in commands:
-            image = memegen.apply_format_twitter(
-                image, commands[SYM_T])
+        except ImageLoadException:
+            error_message = \
+                "{} Unable to open the image provided." \
+                .format(message.author.mention)
 
-        # demotivational format
-        if SYM_DT in commands or SYM_DS in commands:
-            image = memegen.apply_format_demotivational(
-                image,
-                commands[SYM_DT] if SYM_DT in commands else None,
-                commands[SYM_DS] if SYM_DS in commands else None)
+        except ImageTooSmallException:
+            error_message = \
+                "{} The image provided is too small. " \
+                "Images must have a width of at least {}px." \
+                .format(message.author.mention, IMAGE_WIDTH_MIN)
 
-        # send to discord
-        with BytesIO() as image_binary:
-            image_format = image_fname[image_fname.rfind('.') + 1:]
-            image.save(image_binary, image_format)
-            image_binary.seek(0)
+        except RandomCacheDownloadException:
+            error_message = \
+                "{} Failed to download random image. " \
+                "Please try again." \
+                .format(message.author.mention)
 
-            await message.channel.send(
-                message.author.mention,
-                file=discord.File(
-                    fp=image_binary,
-                    filename='{}_{}'.format(time_ns(), image_fname.lower())
+        except Exception:
+            error_message = \
+                "{} An unknown problem occurred. " \
+                "Please try again." \
+                .format(message.author.mention)
+
+        finally:
+            if error_message is not None:
+                await message.channel.send(error_message)
+                return
+
+        if image is not None and image_fname is not None:
+            # impact format
+            if SYM_IT in commands:
+                image = memegen.apply_format_impact(
+                    image, commands[SYM_IT], True)
+
+            if SYM_IB in commands:
+                image = memegen.apply_format_impact(
+                    image, commands[SYM_IB], False)
+
+            # twitter format
+            if SYM_T in commands:
+                image = memegen.apply_format_twitter(
+                    image, commands[SYM_T])
+
+            # demotivational format
+            if SYM_DT in commands or SYM_DS in commands:
+                image = memegen.apply_format_demotivational(
+                    image,
+                    commands[SYM_DT] if SYM_DT in commands else None,
+                    commands[SYM_DS] if SYM_DS in commands else None)
+
+            # send to discord
+            with BytesIO() as image_binary:
+                image_format = image_fname[image_fname.rfind('.') + 1:]
+                image.save(image_binary, image_format)
+                image_binary.seek(0)
+
+                await message.channel.send(
+                    message.author.mention,
+                    file=discord.File(
+                        fp=image_binary,
+                        filename='{}_{}'.format(
+                            time_ns(), image_fname.lower())
+                    )
                 )
-            )
 
-        cache.update_cache(subreddits, wait_sec=UPDATE_WAIT_SECONDS)
+            cache.update_cache(subreddits, wait_sec=UPDATE_WAIT_SECONDS)
 
 
 print_info(logger_run_discord, "Init subreddits")
