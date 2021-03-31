@@ -1,92 +1,105 @@
+from abc import ABC
 from textwrap import wrap
 from PIL import Image, ImageDraw, ImageOps
+from PIL import ImageFont
 
 
-class MemeGen:
-    I_OFFSET = 2
-    I_WORD_WRAP = 26
-    I_HEIGHT_PAD = 15
-    I_HEIGHT_FORCE = 45
+class MemeFormat(ABC):
 
-    T_WORD_WRAP = 31
-    T_HEIGHT_FORCE = 45
-    T_PAD = 15
-    T_RADIUS = 60
-    T_RADIUS_MULTIPLY = 3
-
-    D_PAD = 3
-    DT_HEIGHT_FORCE = 50
-    DS_HEIGHT_FORCE = 24
-
-    def __init__(
-            self,
-            logger,
-            font_twitter,
-            font_impact,
-            font_demot_title,
-            font_demot_subtitle) -> None:
+    def __init__(self, logger) -> None:
         super().__init__()
 
         self.logger = logger
-        self.font_twitter = font_twitter
-        self.font_impact = font_impact
-        self.font_demot_title = font_demot_title
-        self.font_demot_subtitle = font_demot_subtitle
 
-    def apply_format_impact(self, image, list_text, top):
+
+class ImpactFormat(MemeFormat):
+    POSITION_TOP = "TOP"
+    POSITION_BOTTOM = "BOTTOM"
+    OFFSET = 2
+    WORD_WRAP = 26
+    HEIGHT_PAD = 15
+    HEIGHT_FORCE = 45
+
+    def __init__(self, logger, font_path, font_size) -> None:
+        super().__init__(logger)
+
+        self.font_path = font_path
+        self.font_size = font_size
+        self.font = ImageFont.truetype(font_path, font_size)
+
+    def apply_format(self, image, list_text, position):
+        position = position.strip().upper()
         draw = ImageDraw.Draw(image)
 
         i_width, i_height = image.size
         text_lines = wrap(
             ' '.join(list_text).upper(),
-            width=MemeGen.I_WORD_WRAP)
+            width=ImpactFormat.WORD_WRAP)
 
         for i, text in enumerate(text_lines):
-            t_width, t_height = draw.textsize(text, font=self.font_impact)
+            t_width, t_height = draw.textsize(text, font=self.font)
 
             x = (i_width - t_width) / 2
 
-            if top:
-                y = (i * MemeGen.I_HEIGHT_FORCE)
-            else:
+            if position == ImpactFormat.POSITION_TOP:
+                y = (i * ImpactFormat.HEIGHT_FORCE)
+
+            elif position == ImpactFormat.POSITION_BOTTOM:
                 y = (i_height -
-                     MemeGen.I_HEIGHT_FORCE -
-                     MemeGen.I_HEIGHT_PAD) - \
+                     ImpactFormat.HEIGHT_FORCE -
+                     ImpactFormat.HEIGHT_PAD) - \
                     (len(text_lines) - (i + 1)) * \
-                    MemeGen.I_HEIGHT_FORCE
+                    ImpactFormat.HEIGHT_FORCE
+            else:
+                return image  # invalid position
 
             for pos in [
-                (x - MemeGen.I_OFFSET, y - MemeGen.I_OFFSET),
-                (x + MemeGen.I_OFFSET, y - MemeGen.I_OFFSET),
-                (x - MemeGen.I_OFFSET, y + MemeGen.I_OFFSET),
-                (x + MemeGen.I_OFFSET, y + MemeGen.I_OFFSET)
+                (x - ImpactFormat.OFFSET, y - ImpactFormat.OFFSET),
+                (x + ImpactFormat.OFFSET, y - ImpactFormat.OFFSET),
+                (x - ImpactFormat.OFFSET, y + ImpactFormat.OFFSET),
+                (x + ImpactFormat.OFFSET, y + ImpactFormat.OFFSET)
             ]:
-                draw.text(pos, text, font=self.font_impact, fill="black")
+                draw.text(pos, text, font=self.font, fill="black")
 
-            draw.text((x, y), text, font=self.font_impact, fill="white")
+            draw.text((x, y), text, font=self.font, fill="white")
 
         return image
 
-    def apply_format_twitter(self, image, list_text):
+
+class TwitterFormat(MemeFormat):
+    WORD_WRAP = 31
+    HEIGHT_FORCE = 45
+    PAD = 15
+    RADIUS = 60
+    RADIUS_MULTIPLY = 3
+
+    def __init__(self, logger, font_path, font_size) -> None:
+        super().__init__(logger)
+
+        self.font_path = font_path
+        self.font_size = font_size
+        self.font = ImageFont.truetype(font_path, font_size)
+
+    def apply_format(self, image, list_text):
         text_lines = wrap(
             ' '.join(list_text),
-            width=MemeGen.T_WORD_WRAP)
-        image = MemeGen._add_corners(image, MemeGen.T_RADIUS)
+            width=TwitterFormat.WORD_WRAP)
+        image = TwitterFormat._add_corners(image, TwitterFormat.RADIUS)
 
-        top = (MemeGen.T_PAD * 2) + \
+        top = (TwitterFormat.PAD * 2) + \
               (len(text_lines) *
-               MemeGen.T_HEIGHT_FORCE)
+               TwitterFormat.HEIGHT_FORCE)
 
-        border = (MemeGen.T_PAD, top, MemeGen.T_PAD, MemeGen.T_PAD)
+        border = (TwitterFormat.PAD, top, TwitterFormat.PAD, TwitterFormat.PAD)
 
         image = ImageOps.expand(image, border=border, fill='white')
         draw = ImageDraw.Draw(image)
 
         for i, text in enumerate(text_lines):
-            x = MemeGen.T_PAD
-            y = MemeGen.T_PAD + (i * MemeGen.T_HEIGHT_FORCE)
+            x = TwitterFormat.PAD
+            y = TwitterFormat.PAD + (i * TwitterFormat.HEIGHT_FORCE)
 
-            draw.text((x, y), text, font=self.font_twitter, fill="black")
+            draw.text((x, y), text, font=self.font, fill="black")
 
         return image
 
@@ -97,8 +110,8 @@ class MemeGen:
         # Temporarily double image size so that corners appear smoother
         # when returned back to its original size
         w_orig, h_orig = image.size
-        image = image.resize((w_orig * MemeGen.T_RADIUS_MULTIPLY,
-                              h_orig * MemeGen.T_RADIUS_MULTIPLY))
+        image = image.resize((w_orig * TwitterFormat.RADIUS_MULTIPLY,
+                              h_orig * TwitterFormat.RADIUS_MULTIPLY))
         w, h = image.size
 
         # Add corners
@@ -127,10 +140,38 @@ class MemeGen:
 
         return image
 
-    def apply_format_demotivational(
+
+class DemotivationalFormat(MemeFormat):
+    PAD = 3
+    DT_HEIGHT_FORCE = 50
+    DS_HEIGHT_FORCE = 24
+
+    def __init__(self,
+                 logger,
+                 font_title_path,
+                 font_title_size,
+                 font_subtitle_path,
+                 font_subtitle_size) -> None:
+        super().__init__(logger)
+
+        self.font_title_path = font_title_path
+        self.font_title_size = font_title_size
+        self.font_title = ImageFont.truetype(
+            font_title_path, font_title_size)
+
+        self.font_subtitle_path = font_subtitle_path
+        self.font_subtitle_size = font_subtitle_size
+        self.font_subtitle = ImageFont.truetype(
+            font_subtitle_path, font_subtitle_size)
+
+    def apply_format(
             self, image, list_title=None, list_subtitle=None):
-        border_inner = \
-            (MemeGen.D_PAD, MemeGen.D_PAD, MemeGen.D_PAD, MemeGen.D_PAD)
+        border_inner = (
+            DemotivationalFormat.PAD,
+            DemotivationalFormat.PAD,
+            DemotivationalFormat.PAD,
+            DemotivationalFormat.PAD
+        )
 
         border_outer = (80, 50, 80, 0)
 
@@ -154,7 +195,7 @@ class MemeGen:
             if list_subtitle is not None:
                 image = ImageOps.expand(
                     image,
-                    border=(0, 0, 0, 20 if list_title is None else 15),
+                    border=(0, 0, 0, 20 if list_title is None else 17),
                     fill='black')
 
                 image = self._add_demotivational_subtitle(image, list_subtitle)
@@ -171,7 +212,7 @@ class MemeGen:
         dt_width, dt_height = image.size
 
         title_lines = wrap(' '.join(list_title).upper(), width=22)
-        title_bottom = len(title_lines) * MemeGen.DT_HEIGHT_FORCE
+        title_bottom = len(title_lines) * DemotivationalFormat.DT_HEIGHT_FORCE
 
         image = ImageOps.expand(
             image,
@@ -182,17 +223,17 @@ class MemeGen:
 
         for i, text in enumerate(title_lines):
             t_width, t_height = dt_draw.textsize(
-                text, font=self.font_demot_title)
+                text, font=self.font_title)
 
             x = (dt_width - t_width) / 2
             y = dt_height - \
-                (MemeGen.DT_HEIGHT_FORCE / 2) + \
-                (i * MemeGen.DT_HEIGHT_FORCE)
+                (DemotivationalFormat.DT_HEIGHT_FORCE / 2) + \
+                (i * DemotivationalFormat.DT_HEIGHT_FORCE)
 
             dt_draw.text(
                 (x, y),
                 text,
-                font=self.font_demot_title,
+                font=self.font_title,
                 fill="white")
 
         return image
@@ -201,7 +242,9 @@ class MemeGen:
         ds_width, ds_height = image.size
 
         subtitle_lines = wrap(' '.join(list_subtitle), width=74)
-        subtitle_bottom = len(subtitle_lines) * MemeGen.DS_HEIGHT_FORCE
+        subtitle_bottom = \
+            len(subtitle_lines) * \
+            DemotivationalFormat.DS_HEIGHT_FORCE
 
         image = ImageOps.expand(
             image,
@@ -212,17 +255,17 @@ class MemeGen:
 
         for i, text in enumerate(subtitle_lines):
             t_width, t_height = ds_draw.textsize(
-                text, font=self.font_demot_subtitle)
+                text, font=self.font_subtitle)
 
             x = (ds_width - t_width) / 2
             y = ds_height - \
-                (MemeGen.DS_HEIGHT_FORCE / 2) + \
-                (i * MemeGen.DS_HEIGHT_FORCE)
+                (DemotivationalFormat.DS_HEIGHT_FORCE / 2) + \
+                (i * DemotivationalFormat.DS_HEIGHT_FORCE)
 
             ds_draw.text(
                 (x, y),
                 text,
-                font=self.font_demot_subtitle,
+                font=self.font_subtitle,
                 fill="white")
 
         return image

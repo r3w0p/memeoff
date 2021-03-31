@@ -4,7 +4,7 @@ from io import BytesIO
 from time import sleep
 from PIL import ImageFont
 from src.subreddits import *
-from src.memegen import *
+from src.meme import *
 from src.cache import *
 
 # arguments
@@ -31,20 +31,19 @@ PATH_FONTS_IMPACT = DIR_FILE / DIR_CONFIG / DIR_FONTS / \
                      "Anton" / "Anton-Regular.ttf"
 PATH_FONTS_TWITTER = DIR_FILE / DIR_CONFIG / DIR_FONTS / \
                      "Arimo" / "Arimo-Regular.ttf"
-PATH_FONTS_DEMOT_TITLE = DIR_FILE / DIR_CONFIG / DIR_FONTS / \
+PATH_FONTS_DEMOTIVATIONAL_TITLE = DIR_FILE / DIR_CONFIG / DIR_FONTS / \
                      "Scheherazade" / "Scheherazade-Regular.ttf"
-PATH_FONTS_DEMOT_SUBTITLE = DIR_FILE / DIR_CONFIG / DIR_FONTS / \
+PATH_FONTS_DEMOTIVATIONAL_SUBTITLE = DIR_FILE / DIR_CONFIG / DIR_FONTS / \
                      "OpenSans" / "OpenSans-SemiBold.ttf"
 
 PATH_LOGS_RUN_DISCORD = DIR_FILE / DIR_LOGS / "run_discord.log"
 PATH_LOGS_DISCORD = DIR_FILE / DIR_LOGS / "discord.log"
 PATH_LOGS_CACHE = DIR_FILE / DIR_LOGS / "cache.log"
-PATH_LOGS_MEMEGEN = DIR_FILE / DIR_LOGS / "memegen.log"
+PATH_LOGS_MEME = DIR_FILE / DIR_LOGS / "meme.log"
 PATH_LOGS_SUBREDDITS = DIR_FILE / DIR_LOGS / "subreddits.log"
 
-# controls
+# commands
 SYM_M = "-M"
-SYM_URL = "-URL"
 
 # formats
 SYM_IT = "-IT"
@@ -52,6 +51,9 @@ SYM_IB = "-IB"
 SYM_T = "-T"
 SYM_DT = "-DT"
 SYM_DS = "-DS"
+
+# options
+SYM_URL = "-URL"
 
 # arguments
 SYM_ARG_PING = "PING"
@@ -66,21 +68,20 @@ UPDATE_WAIT_SECONDS = 60 * 1
 MAX_RANDOM_DOWNLOAD_ATTEMPTS = 3
 CACHE_SIZE_LIMIT = 1000
 
-# memegen
+# meme
 IMAGE_WIDTH_MIN = 200
 IMAGE_WIDTH_FORCE = 500
 
-FONT_TWITTER = ImageFont.truetype(str(PATH_FONTS_TWITTER), 36)
-FONT_IMPACT = ImageFont.truetype(str(PATH_FONTS_IMPACT), 40)
-FONT_DEMOT_TITLE = ImageFont.truetype(str(PATH_FONTS_DEMOT_TITLE), 70)
-FONT_DEMOT_SUBTITLE = ImageFont.truetype(str(PATH_FONTS_DEMOT_SUBTITLE), 18)
-
+FONT_IMPACT_SIZE = 40
+FONT_TWITTER_SIZE = 36
+FONT_DEMOTIVATIONAL_TITLE_SIZE = 70
+FONT_DEMOTIVATIONAL_SUBTITLE_SIZE = 18
 
 # logger
 logger_run_discord = init_log("run_discord", PATH_LOGS_RUN_DISCORD)
 logger_discord = init_log("discord", PATH_LOGS_DISCORD)
 logger_cache = init_log("cache", PATH_LOGS_CACHE)
-logger_memegen = init_log("memegen", PATH_LOGS_MEMEGEN)
+logger_meme = init_log("meme", PATH_LOGS_MEME)
 logger_subreddits = init_log("subreddits", PATH_LOGS_SUBREDDITS)
 
 # discord
@@ -237,21 +238,20 @@ async def on_message(message):
         if image is not None and image_fname is not None:
             # impact format
             if SYM_IT in commands:
-                image = memegen.apply_format_impact(
-                    image, commands[SYM_IT], True)
+                image = format_impact.apply_format(
+                    image, commands[SYM_IT], ImpactFormat.POSITION_TOP)
 
             if SYM_IB in commands:
-                image = memegen.apply_format_impact(
-                    image, commands[SYM_IB], False)
+                image = format_impact.apply_format(
+                    image, commands[SYM_IB], ImpactFormat.POSITION_BOTTOM)
 
             # twitter format
             if SYM_T in commands:
-                image = memegen.apply_format_twitter(
-                    image, commands[SYM_T])
+                image = format_twitter.apply_format(image, commands[SYM_T])
 
             # demotivational format
             if SYM_DT in commands or SYM_DS in commands:
-                image = memegen.apply_format_demotivational(
+                image = format_demotivational.apply_format(
                     image,
                     commands[SYM_DT] if SYM_DT in commands else None,
                     commands[SYM_DS] if SYM_DS in commands else None)
@@ -275,22 +275,35 @@ async def on_message(message):
 
 
 print_info(logger_run_discord, "Init subreddits")
+
 subreddits = init_subreddits(
     logger=logger_subreddits,
     path_subreddits=PATH_CONFIG_SUBREDDIT)
 
 
-print_info(logger_run_discord, "Init memegen")
-memegen = MemeGen(
-    logger=logger_memegen,
-    font_twitter=FONT_TWITTER,
-    font_impact=FONT_IMPACT,
-    font_demot_title=FONT_DEMOT_TITLE,
-    font_demot_subtitle=FONT_DEMOT_SUBTITLE
+print_info(logger_run_discord, "Init meme formats")
+
+format_impact = ImpactFormat(
+    logger=logger_meme,
+    font_path=str(PATH_FONTS_IMPACT),
+    font_size=FONT_IMPACT_SIZE)
+
+format_twitter = TwitterFormat(
+    logger=logger_meme,
+    font_path=str(PATH_FONTS_TWITTER),
+    font_size=FONT_TWITTER_SIZE)
+
+format_demotivational = DemotivationalFormat(
+    logger=logger_meme,
+    font_title_path=str(PATH_FONTS_DEMOTIVATIONAL_TITLE),
+    font_title_size=FONT_DEMOTIVATIONAL_TITLE_SIZE,
+    font_subtitle_path=str(PATH_FONTS_DEMOTIVATIONAL_SUBTITLE),
+    font_subtitle_size=FONT_DEMOTIVATIONAL_SUBTITLE_SIZE,
 )
 
 
 print_info(logger_run_discord, "Init cache")
+
 cache = RedditCache(
     logger=logger_cache,
     path_unused=PATH_CACHE_UNUSED,
@@ -317,4 +330,5 @@ else:
 
 
 print_info(logger_run_discord, "Starting bot")
+
 client.run(args.token)
