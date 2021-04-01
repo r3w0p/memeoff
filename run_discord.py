@@ -54,13 +54,14 @@ SYM_DS = "-DS"
 
 # options
 SYM_URL = "-URL"
+SYM_FRY = "-FRY"
 
 # arguments
 SYM_ARG_PING = "PING"
 
 # misc
 SYM_M_LEN = len(SYM_M)
-SYM_CHECK = [SYM_IT, SYM_IB, SYM_T, SYM_DT, SYM_DS, SYM_URL]
+SYM_CHECK = [SYM_IT, SYM_IB, SYM_T, SYM_DT, SYM_DS, SYM_URL, SYM_FRY]
 
 # cache
 UPDATE_WAIT_SECONDS_INIT = 10
@@ -256,6 +257,14 @@ async def on_message(message):
                     commands[SYM_DT] if SYM_DT in commands else None,
                     commands[SYM_DS] if SYM_DS in commands else None)
 
+            # deep fry
+            if SYM_FRY in commands:
+                image = format_deep_fry.fry(
+                    image=image,
+                    noise=0.9,
+                    contrast=700
+                )
+
             # send to discord
             with BytesIO() as image_binary:
                 image_format = image_fname[image_fname.rfind('.') + 1:]
@@ -300,6 +309,8 @@ format_demotivational = DemotivationalFormat(
     font_subtitle_path=str(PATH_FONTS_DEMOTIVATIONAL_SUBTITLE),
     font_subtitle_size=FONT_DEMOTIVATIONAL_SUBTITLE_SIZE,
 )
+
+format_deep_fry = DeepFryFormat(logger=logger_meme)
 
 
 print_info(logger_run_discord, "Init cache")
