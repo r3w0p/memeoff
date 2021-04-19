@@ -143,8 +143,8 @@ class TwitterFormat(MemeFormat):
 
 class DemotivationalFormat(MemeFormat):
     PAD = 3
-    DT_HEIGHT_FORCE = 50
-    DT_WORD_WRAP = 22
+    DT_HEIGHT_FORCE = 54
+    DT_WORD_WRAP = 19
     DS_HEIGHT_FORCE = 26
     DS_WORD_WRAP = 63
 
@@ -190,7 +190,7 @@ class DemotivationalFormat(MemeFormat):
         else:
             if list_title is not None:
                 image = ImageOps.expand(
-                    image, border=(0, 0, 0, 8), fill='black')
+                    image, border=(0, 0, 0, 14), fill='black')
 
                 image = self._add_demotivational_title(image, list_title)
 
@@ -202,10 +202,15 @@ class DemotivationalFormat(MemeFormat):
 
                 image = self._add_demotivational_subtitle(image, list_subtitle)
 
+                if list_title is not None:
+                    image = ImageOps.expand(
+                        image,
+                        border=(0, 0, 0, 4),
+                        fill='black')
             else:
                 image = ImageOps.expand(
                     image,
-                    border=(0, 0, 0, 15),
+                    border=(0, 0, 0, 14),
                     fill='black')
 
         return image
