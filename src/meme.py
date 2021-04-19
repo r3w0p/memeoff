@@ -67,7 +67,7 @@ class ImpactFormat(MemeFormat):
 
 
 class TwitterFormat(MemeFormat):
-    WORD_WRAP = 31
+    WORD_WRAP = 30
     HEIGHT_FORCE = 45
     PAD = 15
     RADIUS = 60
@@ -144,7 +144,9 @@ class TwitterFormat(MemeFormat):
 class DemotivationalFormat(MemeFormat):
     PAD = 3
     DT_HEIGHT_FORCE = 50
-    DS_HEIGHT_FORCE = 24
+    DT_WORD_WRAP = 22
+    DS_HEIGHT_FORCE = 26
+    DS_WORD_WRAP = 63
 
     def __init__(self,
                  logger,
@@ -211,7 +213,8 @@ class DemotivationalFormat(MemeFormat):
     def _add_demotivational_title(self, image, list_title):
         dt_width, dt_height = image.size
 
-        title_lines = wrap(' '.join(list_title).upper(), width=22)
+        title_lines = wrap(' '.join(list_title).upper(),
+                           width=DemotivationalFormat.DT_WORD_WRAP)
         title_bottom = len(title_lines) * DemotivationalFormat.DT_HEIGHT_FORCE
 
         image = ImageOps.expand(
@@ -241,7 +244,8 @@ class DemotivationalFormat(MemeFormat):
     def _add_demotivational_subtitle(self, image, list_subtitle):
         ds_width, ds_height = image.size
 
-        subtitle_lines = wrap(' '.join(list_subtitle), width=74)
+        subtitle_lines = wrap(' '.join(list_subtitle),
+                              width=DemotivationalFormat.DS_WORD_WRAP)
         subtitle_bottom = \
             len(subtitle_lines) * \
             DemotivationalFormat.DS_HEIGHT_FORCE
