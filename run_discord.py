@@ -32,7 +32,7 @@ PATH_FONTS_IMPACT = DIR_FILE / DIR_CONFIG / DIR_FONTS / \
 PATH_FONTS_TWITTER = DIR_FILE / DIR_CONFIG / DIR_FONTS / \
                      "Arimo" / "Arimo-Regular.ttf"
 PATH_FONTS_DEMOTIVATIONAL_TITLE = DIR_FILE / DIR_CONFIG / DIR_FONTS / \
-                     "Scheherazade" / "Scheherazade-Regular.ttf"
+                     "Jomolhari" / "Jomolhari-Regular.ttf"
 PATH_FONTS_DEMOTIVATIONAL_SUBTITLE = DIR_FILE / DIR_CONFIG / DIR_FONTS / \
                      "OpenSans" / "OpenSans-SemiBold.ttf"
 
@@ -74,8 +74,8 @@ IMAGE_WIDTH_FORCE = 500
 
 FONT_IMPACT_SIZE = 40
 FONT_TWITTER_SIZE = 36
-FONT_DEMOTIVATIONAL_TITLE_SIZE = 70
-FONT_DEMOTIVATIONAL_SUBTITLE_SIZE = 20
+FONT_DEMOTIVATIONAL_TITLE_SIZE = 54
+FONT_DEMOTIVATIONAL_SUBTITLE_SIZE = 22
 
 # logger
 logger_run_discord = init_log("run_discord", PATH_LOGS_RUN_DISCORD)

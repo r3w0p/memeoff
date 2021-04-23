@@ -1,4 +1,7 @@
-Copyright (c) 1994-2014, SIL International (http://www.sil.org/).
+This Font Software is Copyright (c) 2006, Christopher J Fynn
+All Rights Reserved.
+
+"Jomolhari" is a Reserved Font Name for this Font Software.
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
 This license is copied below, and is also available with a FAQ at:

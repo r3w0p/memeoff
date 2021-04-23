@@ -143,10 +143,10 @@ class TwitterFormat(MemeFormat):
 
 class DemotivationalFormat(MemeFormat):
     PAD = 3
-    DT_HEIGHT_FORCE = 54
-    DT_WORD_WRAP = 19
+    DT_HEIGHT_FORCE = 58
+    DT_WORD_WRAP = 18
     DS_HEIGHT_FORCE = 26
-    DS_WORD_WRAP = 63
+    DS_WORD_WRAP = 58
 
     def __init__(self,
                  logger,
@@ -175,7 +175,7 @@ class DemotivationalFormat(MemeFormat):
             DemotivationalFormat.PAD
         )
 
-        border_outer = (80, 50, 80, 0)
+        border_outer = (84, 54, 84, 0)
 
         image = ImageOps.expand(image, border=border_inner, fill='black')
         image = ImageOps.expand(image, border=border_inner, fill='white')
@@ -190,23 +190,24 @@ class DemotivationalFormat(MemeFormat):
         else:
             if list_title is not None:
                 image = ImageOps.expand(
-                    image, border=(0, 0, 0, 14), fill='black')
+                    image, border=(0, 0, 0, 20), fill='black')
 
                 image = self._add_demotivational_title(image, list_title)
 
             if list_subtitle is not None:
-                image = ImageOps.expand(
-                    image,
-                    border=(0, 0, 0, 20 if list_title is None else 17),
-                    fill='black')
+                if list_title is None:
+                    image = ImageOps.expand(
+                        image,
+                        border=(0, 0, 0, 18),
+                        fill='black')
 
                 image = self._add_demotivational_subtitle(image, list_subtitle)
 
-                if list_title is not None:
-                    image = ImageOps.expand(
-                        image,
-                        border=(0, 0, 0, 4),
-                        fill='black')
+                #if list_title is not None:
+                #    image = ImageOps.expand(
+                #        image,
+                #        border=(0, 0, 0, 4),
+                #        fill='black')
             else:
                 image = ImageOps.expand(
                     image,
