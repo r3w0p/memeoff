@@ -16,7 +16,7 @@ class ImpactFormat(MemeFormat):
     POSITION_TOP = "TOP"
     POSITION_BOTTOM = "BOTTOM"
     OFFSET = 2
-    WORD_WRAP = 26
+    WORD_WRAP = 27
     HEIGHT_PAD = 15
     HEIGHT_FORCE = 45
 
