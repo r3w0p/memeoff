@@ -56,6 +56,7 @@ SYM_DS = "-DS"
 SYM_URL = "-URL"
 
 # arguments
+SYM_ARG_ANON = "ANON"
 SYM_ARG_PING = "PING"
 
 # misc
@@ -186,11 +187,12 @@ async def on_message(message):
         image = None
         image_fname = None
         error_message = None
+        anonymous = SYM_ARG_ANON in commands[SYM_M]
+        text_anonymous = "" if anonymous else (message.author.mention + " ")
 
         try:
             if SYM_ARG_PING in commands[SYM_M]:
-                await message.channel.send(
-                    "{} Pong.".format(message.author.mention))
+                await message.channel.send(text_anonymous + "Pong.")
 
             else:
                 image, image_fname = extract_image(message, commands)
@@ -199,34 +201,40 @@ async def on_message(message):
 
         except InvalidImageURLException:
             error_message = \
-                "{} The image provided is of an invalid image type." \
+                text_anonymous + \
+                "The image provided is of an invalid image type." \
                 .format(message.author.mention)
 
         except ImageDownloadException:
             error_message = \
-                "{} Unable to download the image provided." \
+                text_anonymous + \
+                "Unable to download the image provided." \
                 .format(message.author.mention)
 
         except ImageLoadException:
             error_message = \
-                "{} Unable to open the image provided." \
+                text_anonymous + \
+                "Unable to open the image provided." \
                 .format(message.author.mention)
 
         except ImageTooSmallException:
             error_message = \
-                "{} The image provided is too small. " \
+                text_anonymous + \
+                "The image provided is too small. " \
                 "Images must have a width of at least {}px." \
                 .format(message.author.mention, IMAGE_WIDTH_MIN)
 
         except RandomCacheDownloadException:
             error_message = \
-                "{} Failed to download random image. " \
+                text_anonymous + \
+                "Failed to download random image. " \
                 "Please try again." \
                 .format(message.author.mention)
 
         except Exception:
             error_message = \
-                "{} An unknown problem occurred. " \
+                text_anonymous + \
+                "An unknown problem occurred. " \
                 "Please try again." \
                 .format(message.author.mention)
 
@@ -263,7 +271,7 @@ async def on_message(message):
                 image_binary.seek(0)
 
                 await message.channel.send(
-                    message.author.mention,
+                    text_anonymous,
                     file=discord.File(
                         fp=image_binary,
                         filename='{}_{}'.format(
