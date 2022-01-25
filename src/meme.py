@@ -16,16 +16,16 @@ class ImpactFormat(MemeFormat):
     POSITION_TOP = "TOP"
     POSITION_BOTTOM = "BOTTOM"
     OFFSET = 2
-    WORD_WRAP = 27
+    WORD_WRAP = 20
     HEIGHT_PAD = 15
-    HEIGHT_FORCE = 45
+    HEIGHT_FORCE = 60
+    FONT_SIZE = 60
 
-    def __init__(self, logger, font_path, font_size) -> None:
+    def __init__(self, logger, font_path) -> None:
         super().__init__(logger)
 
         self.font_path = font_path
-        self.font_size = font_size
-        self.font = ImageFont.truetype(font_path, font_size)
+        self.font = ImageFont.truetype(font_path, ImpactFormat.FONT_SIZE)
 
     def apply_format(self, image, list_text, position):
         position = position.strip().upper()
@@ -272,5 +272,64 @@ class DemotivationalFormat(MemeFormat):
                 text,
                 font=self.font_subtitle,
                 fill="white")
+
+        return image
+
+
+class GIFCaptionFormat(MemeFormat):
+    WORD_WRAP = 25
+    HEIGHT_FORCE = 50
+    PAD = 20
+    FONT_SIZE = 50
+
+    TEXT_SPACE = 5
+    PAD_FONT_REDUCTION = 5
+
+    def __init__(self, logger, font_path) -> None:
+        super().__init__(logger)
+
+        self.font_path = font_path
+        self.font = ImageFont.truetype(font_path, GIFCaptionFormat.FONT_SIZE)
+
+    def apply_format(self, image, list_text):
+        text_lines = wrap(
+            ' '.join(list_text),
+            width=GIFCaptionFormat.WORD_WRAP)
+
+        font = self.font
+        font_size = self.FONT_SIZE
+        for text in text_lines:
+            while font.getsize(text)[0] > image.size[0]:
+                font_size -= 1
+                font = ImageFont.truetype(self.font_path, font_size)
+
+        if font_size < self.FONT_SIZE:
+            font_size -= GIFCaptionFormat.PAD_FONT_REDUCTION
+            font = ImageFont.truetype(self.font_path, font_size)
+
+        max_text_height = 0
+        for text in text_lines:
+            text_size = font.getsize(text)
+            if text_size[1] > max_text_height:
+                max_text_height = text_size[1]
+
+        top = (GIFCaptionFormat.PAD * 2) + \
+              (max_text_height * len(text_lines)) + \
+              (GIFCaptionFormat.TEXT_SPACE * len(text_lines))
+
+        border = (0, top, 0, 0)
+        image = ImageOps.expand(image, border=border, fill='white')
+
+        draw = ImageDraw.Draw(image)
+        i_width, i_height = image.size
+
+        for i, text in enumerate(text_lines):
+            t_width, t_height = draw.textsize(text, font=font)
+
+            x = (i_width - t_width) / 2
+            y = GIFCaptionFormat.PAD + \
+                (i * (max_text_height + GIFCaptionFormat.TEXT_SPACE))
+
+            draw.text((x, y), text, font=font, fill="black")
 
         return image

@@ -28,13 +28,15 @@ PATH_CACHE_BAD = DIR_FILE / DIR_CACHE / "bad.csv"
 PATH_CONFIG_SUBREDDIT = DIR_FILE / DIR_CONFIG / "subreddits.txt"
 
 PATH_FONTS_IMPACT = DIR_FILE / DIR_CONFIG / DIR_FONTS / \
-                     "Anton" / "Anton-Regular.ttf"
+                     "impact" / "impact.ttf"
 PATH_FONTS_TWITTER = DIR_FILE / DIR_CONFIG / DIR_FONTS / \
-                     "Arimo" / "Arimo-Regular.ttf"
+                     "twitter" / "twitter.ttf"
 PATH_FONTS_DEMOTIVATIONAL_TITLE = DIR_FILE / DIR_CONFIG / DIR_FONTS / \
-                     "Jomolhari" / "Jomolhari-Regular.ttf"
+                     "demotivational" / "demotivational_title.ttf"
 PATH_FONTS_DEMOTIVATIONAL_SUBTITLE = DIR_FILE / DIR_CONFIG / DIR_FONTS / \
-                     "OpenSans" / "OpenSans-SemiBold.ttf"
+                     "demotivational" / "demotivational_subtitle.ttf"
+PATH_FONTS_GIF_CAPTION = DIR_FILE / DIR_CONFIG / DIR_FONTS / \
+                     "gif_caption" / "gif_caption.ttf"
 
 PATH_LOGS_RUN_DISCORD = DIR_FILE / DIR_LOGS / "run_discord.log"
 PATH_LOGS_DISCORD = DIR_FILE / DIR_LOGS / "discord.log"
@@ -51,6 +53,7 @@ SYM_IB = "-IB"
 SYM_T = "-T"
 SYM_DT = "-DT"
 SYM_DS = "-DS"
+SYM_GC = "-GC"
 
 # options
 SYM_URL = "-URL"
@@ -58,10 +61,11 @@ SYM_URL = "-URL"
 # arguments
 SYM_ARG_ANON = "ANON"
 SYM_ARG_PING = "PING"
+# todo SYM_ARG_HELP = "HELP"
 
 # misc
 SYM_M_LEN = len(SYM_M)
-SYM_CHECK = [SYM_IT, SYM_IB, SYM_T, SYM_DT, SYM_DS, SYM_URL]
+SYM_CHECK = [SYM_IT, SYM_IB, SYM_T, SYM_DT, SYM_DS, SYM_GC, SYM_URL]
 
 # cache
 UPDATE_WAIT_SECONDS_INIT = 10
@@ -73,7 +77,6 @@ CACHE_SIZE_LIMIT = 1000
 IMAGE_WIDTH_MIN = 200
 IMAGE_WIDTH_FORCE = 500
 
-FONT_IMPACT_SIZE = 40
 FONT_TWITTER_SIZE = 36
 FONT_DEMOTIVATIONAL_TITLE_SIZE = 49
 FONT_DEMOTIVATIONAL_SUBTITLE_SIZE = 21
@@ -255,7 +258,8 @@ async def on_message(message):
 
             # twitter format
             if SYM_T in commands:
-                image = format_twitter.apply_format(image, commands[SYM_T])
+                image = format_twitter.apply_format(
+                    image, commands[SYM_T])
 
             # demotivational format
             if SYM_DT in commands or SYM_DS in commands:
@@ -263,6 +267,11 @@ async def on_message(message):
                     image,
                     commands[SYM_DT] if SYM_DT in commands else None,
                     commands[SYM_DS] if SYM_DS in commands else None)
+
+            # gif caption format
+            if SYM_GC in commands:
+                image = format_gif_caption.apply_format(
+                    image, commands[SYM_GC])
 
             # send to discord
             with BytesIO() as image_binary:
@@ -293,8 +302,7 @@ print_info(logger_run_discord, "Init meme formats")
 
 format_impact = ImpactFormat(
     logger=logger_meme,
-    font_path=str(PATH_FONTS_IMPACT),
-    font_size=FONT_IMPACT_SIZE)
+    font_path=str(PATH_FONTS_IMPACT))
 
 format_twitter = TwitterFormat(
     logger=logger_meme,
@@ -306,8 +314,11 @@ format_demotivational = DemotivationalFormat(
     font_title_path=str(PATH_FONTS_DEMOTIVATIONAL_TITLE),
     font_title_size=FONT_DEMOTIVATIONAL_TITLE_SIZE,
     font_subtitle_path=str(PATH_FONTS_DEMOTIVATIONAL_SUBTITLE),
-    font_subtitle_size=FONT_DEMOTIVATIONAL_SUBTITLE_SIZE,
-)
+    font_subtitle_size=FONT_DEMOTIVATIONAL_SUBTITLE_SIZE)
+
+format_gif_caption = GIFCaptionFormat(
+    logger=logger_meme,
+    font_path=str(PATH_FONTS_GIF_CAPTION))
 
 
 print_info(logger_run_discord, "Init cache")
