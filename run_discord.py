@@ -28,15 +28,15 @@ PATH_CACHE_BAD = DIR_FILE / DIR_CACHE / "bad.csv"
 PATH_CONFIG_SUBREDDIT = DIR_FILE / DIR_CONFIG / "subreddits.txt"
 
 PATH_FONTS_IMPACT = DIR_FILE / DIR_CONFIG / DIR_FONTS / \
-                     "impact" / "impact.ttf"
+                    "impact" / "impact.ttf"
 PATH_FONTS_TWITTER = DIR_FILE / DIR_CONFIG / DIR_FONTS / \
                      "twitter" / "twitter.ttf"
 PATH_FONTS_DEMOTIVATIONAL_TITLE = DIR_FILE / DIR_CONFIG / DIR_FONTS / \
-                     "demotivational" / "demotivational_title.ttf"
+                                  "demotivational" / "demotivational_title.ttf"
 PATH_FONTS_DEMOTIVATIONAL_SUBTITLE = DIR_FILE / DIR_CONFIG / DIR_FONTS / \
-                     "demotivational" / "demotivational_subtitle.ttf"
+                                     "demotivational" / "demotivational_subtitle.ttf"
 PATH_FONTS_GIF_CAPTION = DIR_FILE / DIR_CONFIG / DIR_FONTS / \
-                     "gif_caption" / "gif_caption.ttf"
+                         "gif_caption" / "gif_caption.ttf"
 
 PATH_LOGS_RUN_DISCORD = DIR_FILE / DIR_LOGS / "run_discord.log"
 PATH_LOGS_DISCORD = DIR_FILE / DIR_LOGS / "discord.log"
@@ -61,7 +61,7 @@ SYM_URL = "-URL"
 # arguments
 SYM_ARG_ANON = "ANON"
 SYM_ARG_PING = "PING"
-# todo SYM_ARG_HELP = "HELP"
+SYM_ARG_HELP = "HELP"
 
 # misc
 SYM_M_LEN = len(SYM_M)
@@ -76,10 +76,6 @@ CACHE_SIZE_LIMIT = 1000
 # meme
 IMAGE_WIDTH_MIN = 200
 IMAGE_WIDTH_FORCE = 500
-
-FONT_TWITTER_SIZE = 36
-FONT_DEMOTIVATIONAL_TITLE_SIZE = 49
-FONT_DEMOTIVATIONAL_SUBTITLE_SIZE = 21
 
 # logger
 logger_run_discord = init_log("run_discord", PATH_LOGS_RUN_DISCORD)
@@ -197,6 +193,12 @@ async def on_message(message):
             if SYM_ARG_PING in commands[SYM_M]:
                 await message.channel.send(text_anonymous + "Pong.")
 
+            elif SYM_ARG_HELP in commands[SYM_M]:
+                embed = discord.Embed()
+                embed.description = text_anonymous + \
+                                    "https://github.com/r3w0p/memeoff/wiki"
+                await message.channel.send(embed=embed)
+
             else:
                 image, image_fname = extract_image(message, commands)
 
@@ -206,40 +208,40 @@ async def on_message(message):
             error_message = \
                 text_anonymous + \
                 "The image provided is of an invalid image type." \
-                .format(message.author.mention)
+                    .format(message.author.mention)
 
         except ImageDownloadException:
             error_message = \
                 text_anonymous + \
                 "Unable to download the image provided." \
-                .format(message.author.mention)
+                    .format(message.author.mention)
 
         except ImageLoadException:
             error_message = \
                 text_anonymous + \
                 "Unable to open the image provided." \
-                .format(message.author.mention)
+                    .format(message.author.mention)
 
         except ImageTooSmallException:
             error_message = \
                 text_anonymous + \
                 "The image provided is too small. " \
                 "Images must have a width of at least {}px." \
-                .format(message.author.mention, IMAGE_WIDTH_MIN)
+                    .format(message.author.mention, IMAGE_WIDTH_MIN)
 
         except RandomCacheDownloadException:
             error_message = \
                 text_anonymous + \
                 "Failed to download random image. " \
                 "Please try again." \
-                .format(message.author.mention)
+                    .format(message.author.mention)
 
         except Exception:
             error_message = \
                 text_anonymous + \
                 "An unknown problem occurred. " \
                 "Please try again." \
-                .format(message.author.mention)
+                    .format(message.author.mention)
 
         finally:
             if error_message is not None:
@@ -261,17 +263,17 @@ async def on_message(message):
                 image = format_twitter.apply_format(
                     image, commands[SYM_T])
 
+            # gif caption format
+            if SYM_GC in commands:
+                image = format_gif_caption.apply_format(
+                    image, commands[SYM_GC])
+
             # demotivational format
             if SYM_DT in commands or SYM_DS in commands:
                 image = format_demotivational.apply_format(
                     image,
                     commands[SYM_DT] if SYM_DT in commands else None,
                     commands[SYM_DS] if SYM_DS in commands else None)
-
-            # gif caption format
-            if SYM_GC in commands:
-                image = format_gif_caption.apply_format(
-                    image, commands[SYM_GC])
 
             # send to discord
             with BytesIO() as image_binary:
@@ -297,7 +299,6 @@ subreddits = init_subreddits(
     logger=logger_subreddits,
     path_subreddits=PATH_CONFIG_SUBREDDIT)
 
-
 print_info(logger_run_discord, "Init meme formats")
 
 format_impact = ImpactFormat(
@@ -306,20 +307,16 @@ format_impact = ImpactFormat(
 
 format_twitter = TwitterFormat(
     logger=logger_meme,
-    font_path=str(PATH_FONTS_TWITTER),
-    font_size=FONT_TWITTER_SIZE)
+    font_path=str(PATH_FONTS_TWITTER))
 
 format_demotivational = DemotivationalFormat(
     logger=logger_meme,
     font_title_path=str(PATH_FONTS_DEMOTIVATIONAL_TITLE),
-    font_title_size=FONT_DEMOTIVATIONAL_TITLE_SIZE,
-    font_subtitle_path=str(PATH_FONTS_DEMOTIVATIONAL_SUBTITLE),
-    font_subtitle_size=FONT_DEMOTIVATIONAL_SUBTITLE_SIZE)
+    font_subtitle_path=str(PATH_FONTS_DEMOTIVATIONAL_SUBTITLE))
 
 format_gif_caption = GIFCaptionFormat(
     logger=logger_meme,
     font_path=str(PATH_FONTS_GIF_CAPTION))
-
 
 print_info(logger_run_discord, "Init cache")
 
@@ -346,7 +343,6 @@ if len(cache.unused) == 0:
 else:
     print_info(logger_run_discord, "Updating cache")
     cache.update_cache(subreddits)
-
 
 print_info(logger_run_discord, "Starting bot")
 
