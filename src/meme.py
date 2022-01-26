@@ -2,7 +2,6 @@ from abc import ABC
 from textwrap import wrap
 from PIL import Image, ImageDraw, ImageOps
 from PIL import ImageFont
-from pilmoji import Pilmoji
 from math import floor
 
 
