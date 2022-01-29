@@ -336,6 +336,7 @@ class GIFCaptionFormat(MemeFormat):
     TEXT_SPACE = 5
     MAX_FONT = 0.94
     HEIGHT_PAD = 20
+    EMOJI_SCALE = 0.95
 
     def __init__(self, logger, font_path) -> None:
         super().__init__(logger)
@@ -364,17 +365,23 @@ class GIFCaptionFormat(MemeFormat):
         border = (0, top, 0, 0)
         image = ImageOps.expand(image, border=border, fill='white')
 
-        draw = ImageDraw.Draw(image)
         i_width, i_height = image.size
 
         for i, text in enumerate(text_lines):
-            t_width, t_height = draw.textsize(text, font=font)
+            with Pilmoji(image) as pimoji:
+                t_width, t_height = pimoji.getsize(
+                    text=text,
+                    font=font,
+                    emoji_scale_factor=self.EMOJI_SCALE)
 
-            x = (i_width - t_width) / 2
-            y = GIFCaptionFormat.HEIGHT_PAD + \
-                (i * (max_text_height + GIFCaptionFormat.TEXT_SPACE))
+            x = int((i_width - t_width) / 2)
+            y = int((GIFCaptionFormat.HEIGHT_PAD * 0.95) +
+                    (i * (max_text_height + GIFCaptionFormat.TEXT_SPACE)))
 
-            draw.text((x, y), text, font=font, fill="black")
+            with Pilmoji(image) as pilmoji:
+                pilmoji.text((x, y), text, fill=(0, 0, 0), font=font,
+                             emoji_scale_factor=self.EMOJI_SCALE,
+                             emoji_position_offset=(0, 6))
 
         return image
 

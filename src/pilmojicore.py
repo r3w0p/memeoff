@@ -275,6 +275,8 @@ class Pilmoji:
         emoji_position_offset: Tuple[int, int]
             The emoji position offset for emojis. The can be used for fine adjustments.
             Defaults to the offset given in the class constructor, or `(0, 0)`.
+        emoji_fill:
+            The fill color of the emoji.
         """
 
         if emoji_scale_factor is None:
