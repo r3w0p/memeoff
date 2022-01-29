@@ -2,8 +2,7 @@ from abc import ABC
 from textwrap import wrap
 from PIL import Image, ImageDraw, ImageOps
 from PIL import ImageFont
-from pilmoji import Pilmoji
-from math import floor
+from src.pilmojicore import *
 
 
 class MemeFormat(ABC):
@@ -15,19 +14,21 @@ class MemeFormat(ABC):
 
     @staticmethod
     def _generate_font(text_lines, image, font_path, init_font_size,
-                       max_font=1.0):
+                       font_scale=1.0, emoji_scale_factor: float = None):
         font = ImageFont.truetype(font_path, init_font_size)
-        for text in text_lines:
-            while font.getsize(text)[0] > (image.size[0] * max_font):
-                init_font_size -= 1
-                font = ImageFont.truetype(font_path, init_font_size)
+        pilmoji = Pilmoji(image)
+        width_scaled = image.size[0] * font_scale
+        current_font_size = init_font_size
 
-        max_text_height = 0
         for text in text_lines:
-            text_size = font.getsize(text)
-            if text_size[1] > max_text_height:
-                max_text_height = text_size[1]
+            while pilmoji.getsize(
+                    text=text,
+                    font=font,
+                    emoji_scale_factor=emoji_scale_factor)[0] > width_scaled:
+                current_font_size -= 1
+                font = ImageFont.truetype(font_path, current_font_size)
 
+        pilmoji.close()
         return font
 
     @staticmethod
@@ -47,10 +48,11 @@ class ImpactFormat(MemeFormat):
     POSITION_BOTTOM = "BOTTOM"
 
     WORD_WRAP = 25
-    INIT_FONT_SIZE = 60
+    INIT_FONT_SIZE = 50
     MAX_FONT = 0.94
     OFFSET = 2
-    BOTTOM_PAD = 10
+    PAD_BOTTOM = 10
+    EMOJI_SCALE = 0.9
 
     def __init__(self, logger, font_path) -> None:
         super().__init__(logger)
@@ -59,7 +61,6 @@ class ImpactFormat(MemeFormat):
 
     def apply_format(self, image, list_text, position):
         position = position.strip().upper()
-        draw = ImageDraw.Draw(image)
 
         i_width, i_height = image.size
         text_lines = wrap(
@@ -71,24 +72,30 @@ class ImpactFormat(MemeFormat):
             image=image,
             font_path=self.font_path,
             init_font_size=self.INIT_FONT_SIZE,
-            max_font=self.MAX_FONT)
+            font_scale=self.MAX_FONT,
+            emoji_scale_factor=self.EMOJI_SCALE)
 
         max_text_height = self._get_max_text_height(
             text_lines=text_lines, font=font)
 
         for i, text in enumerate(text_lines):
-            t_width, t_height = draw.textsize(text, font=font)
-            x = (i_width - t_width) / 2
+            with Pilmoji(image) as pimoji:
+                t_width, t_height = pimoji.getsize(
+                    text=text,
+                    font=font,
+                    emoji_scale_factor=self.EMOJI_SCALE)
+
+            x = int((i_width - t_width) / 2)
 
             if position == ImpactFormat.POSITION_TOP:
-                y = (i * max_text_height)
+                y = int(i * max_text_height)
 
             elif position == ImpactFormat.POSITION_BOTTOM:
                 y = i_height - \
-                    self.BOTTOM_PAD - \
-                    ((len(text_lines) - i) * max_text_height)
+                    self.PAD_BOTTOM - \
+                    int((len(text_lines) - i) * max_text_height)
             else:
-                return image  # invalid position
+                return image  # todo handle invalid position
 
             for pos in [
                 (x - ImpactFormat.OFFSET, y - ImpactFormat.OFFSET),
@@ -96,16 +103,23 @@ class ImpactFormat(MemeFormat):
                 (x - ImpactFormat.OFFSET, y + ImpactFormat.OFFSET),
                 (x + ImpactFormat.OFFSET, y + ImpactFormat.OFFSET)
             ]:
-                draw.text(pos, text, font=font, fill="black")
+                with Pilmoji(image) as pilmoji:
+                    pilmoji.text(pos, text, fill=(0, 0, 0), font=font,
+                                 emoji_scale_factor=self.EMOJI_SCALE,
+                                 emoji_position_offset=(0, 7),
+                                 emoji_fill=(0, 0, 0))
 
-            draw.text((x, y), text, font=font, fill="white")
+            with Pilmoji(image) as pilmoji:
+                pilmoji.text((x, y), text, fill=(255, 255, 255), font=font,
+                             emoji_scale_factor=self.EMOJI_SCALE,
+                             emoji_position_offset=(0, 7))
 
         return image
 
 
 class TwitterFormat(MemeFormat):
     WORD_WRAP = 30
-    INIT_FONT_SIZE = 45
+    INIT_FONT_SIZE = 42
     MAX_FONT = 0.94
     PAD_WHITE = 15
     RADIUS = 60
@@ -126,16 +140,18 @@ class TwitterFormat(MemeFormat):
             image=image,
             font_path=self.font_path,
             init_font_size=self.INIT_FONT_SIZE,
-            max_font=self.MAX_FONT)
+            font_scale=self.MAX_FONT)
 
         max_text_height = self._get_max_text_height(
             text_lines=text_lines,
             font=font)
 
         image = TwitterFormat._add_corners(image, TwitterFormat.RADIUS)
-        pad_top = max_text_height + (len(text_lines) * max_text_height)
+
+        pad_top = int(TwitterFormat.PAD_WHITE * 2.4)
+        pad_white_top = pad_top + (len(text_lines) * max_text_height)
         border = (TwitterFormat.PAD_WHITE,
-                  pad_top,
+                  pad_white_top,
                   TwitterFormat.PAD_WHITE,
                   TwitterFormat.PAD_WHITE)
 
@@ -143,16 +159,11 @@ class TwitterFormat(MemeFormat):
 
         for i, text in enumerate(text_lines):
             x = TwitterFormat.PAD_WHITE
-            y = int(max_text_height * 0.45) + (i * max_text_height)
+            y = int(pad_top * 0.42) + (i * max_text_height)
 
             with Pilmoji(image) as pilmoji:
-                pilmoji.text(
-                    (x, y),
-                    text,
-                    fill=(0, 0, 0),
-                    font=font,
-                    emoji_scale_factor=1.0,
-                    emoji_position_offset=(0, 3))
+                pilmoji.text((x, y), text, fill=(0, 0, 0), font=font,
+                             emoji_position_offset=(0, 3))
 
         return image
 
@@ -260,7 +271,7 @@ class DemotivationalFormat(MemeFormat):
             image=image,
             font_path=self.font_title_path,
             init_font_size=self.DT_INIT_FONT_SIZE,
-            max_font=self.DT_MAX_FONT)
+            font_scale=self.DT_MAX_FONT)
 
         max_text_height = self._get_max_text_height(
             text_lines=title_lines, font=font)
@@ -294,7 +305,7 @@ class DemotivationalFormat(MemeFormat):
             image=image,
             font_path=self.font_subtitle_path,
             init_font_size=self.DS_INIT_FONT_SIZE,
-            max_font=self.DS_MAX_FONT)
+            font_scale=self.DS_MAX_FONT)
 
         max_text_height = self._get_max_text_height(
             text_lines=subtitle_lines, font=font)
@@ -341,7 +352,7 @@ class GIFCaptionFormat(MemeFormat):
             image=image,
             font_path=self.font_path,
             init_font_size=self.INIT_FONT_SIZE,
-            max_font=self.MAX_FONT)
+            font_scale=self.MAX_FONT)
 
         max_text_height = self._get_max_text_height(
             text_lines=text_lines, font=font)
