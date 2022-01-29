@@ -2,6 +2,7 @@ from abc import ABC
 from textwrap import wrap
 from PIL import Image, ImageDraw, ImageOps
 from PIL import ImageFont
+from pilmoji import Pilmoji
 from math import floor
 
 
@@ -128,26 +129,30 @@ class TwitterFormat(MemeFormat):
             max_font=self.MAX_FONT)
 
         max_text_height = self._get_max_text_height(
-            text_lines=text_lines, font=font)
+            text_lines=text_lines,
+            font=font)
 
         image = TwitterFormat._add_corners(image, TwitterFormat.RADIUS)
-
-        top = floor(TwitterFormat.PAD_WHITE * 2.5) + \
-              (len(text_lines) * max_text_height)
-
+        pad_top = max_text_height + (len(text_lines) * max_text_height)
         border = (TwitterFormat.PAD_WHITE,
-                  top,
+                  pad_top,
                   TwitterFormat.PAD_WHITE,
                   TwitterFormat.PAD_WHITE)
 
-        image = ImageOps.expand(image, border=border, fill='white')
-        draw = ImageDraw.Draw(image)
+        image = ImageOps.expand(image, border=border, fill="white")
 
         for i, text in enumerate(text_lines):
             x = TwitterFormat.PAD_WHITE
-            y = TwitterFormat.PAD_WHITE + (i * max_text_height)
+            y = int(max_text_height * 0.45) + (i * max_text_height)
 
-            draw.text((x, y), text, font=font, fill="black")
+            with Pilmoji(image) as pilmoji:
+                pilmoji.text(
+                    (x, y),
+                    text,
+                    fill=(0, 0, 0),
+                    font=font,
+                    emoji_scale_factor=1.0,
+                    emoji_position_offset=(0, 3))
 
         return image
 
