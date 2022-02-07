@@ -2,7 +2,7 @@ from abc import ABC
 from textwrap import wrap
 from PIL import Image, ImageDraw, ImageOps
 from PIL import ImageFont
-from math import floor
+from src.pilmojicore import *
 
 
 class MemeFormat(ABC):
@@ -14,19 +14,21 @@ class MemeFormat(ABC):
 
     @staticmethod
     def _generate_font(text_lines, image, font_path, init_font_size,
-                       max_font=1.0):
+                       font_scale=1.0, emoji_scale_factor: float = None):
         font = ImageFont.truetype(font_path, init_font_size)
-        for text in text_lines:
-            while font.getsize(text)[0] > (image.size[0] * max_font):
-                init_font_size -= 1
-                font = ImageFont.truetype(font_path, init_font_size)
+        pilmoji = Pilmoji(image)
+        width_scaled = image.size[0] * font_scale
+        current_font_size = init_font_size
 
-        max_text_height = 0
         for text in text_lines:
-            text_size = font.getsize(text)
-            if text_size[1] > max_text_height:
-                max_text_height = text_size[1]
+            while pilmoji.getsize(
+                    text=text,
+                    font=font,
+                    emoji_scale_factor=emoji_scale_factor)[0] > width_scaled:
+                current_font_size -= 1
+                font = ImageFont.truetype(font_path, current_font_size)
 
+        pilmoji.close()
         return font
 
     @staticmethod
@@ -46,10 +48,11 @@ class ImpactFormat(MemeFormat):
     POSITION_BOTTOM = "BOTTOM"
 
     WORD_WRAP = 25
-    INIT_FONT_SIZE = 60
+    INIT_FONT_SIZE = 50
     MAX_FONT = 0.94
     OFFSET = 2
-    BOTTOM_PAD = 10
+    PAD_BOTTOM = 10
+    EMOJI_SCALE = 0.9
 
     def __init__(self, logger, font_path) -> None:
         super().__init__(logger)
@@ -58,7 +61,6 @@ class ImpactFormat(MemeFormat):
 
     def apply_format(self, image, list_text, position):
         position = position.strip().upper()
-        draw = ImageDraw.Draw(image)
 
         i_width, i_height = image.size
         text_lines = wrap(
@@ -70,24 +72,30 @@ class ImpactFormat(MemeFormat):
             image=image,
             font_path=self.font_path,
             init_font_size=self.INIT_FONT_SIZE,
-            max_font=self.MAX_FONT)
+            font_scale=self.MAX_FONT,
+            emoji_scale_factor=self.EMOJI_SCALE)
 
         max_text_height = self._get_max_text_height(
             text_lines=text_lines, font=font)
 
         for i, text in enumerate(text_lines):
-            t_width, t_height = draw.textsize(text, font=font)
-            x = (i_width - t_width) / 2
+            with Pilmoji(image) as pimoji:
+                t_width, t_height = pimoji.getsize(
+                    text=text,
+                    font=font,
+                    emoji_scale_factor=self.EMOJI_SCALE)
+
+            x = int((i_width - t_width) / 2)
 
             if position == ImpactFormat.POSITION_TOP:
-                y = (i * max_text_height)
+                y = int(i * max_text_height)
 
             elif position == ImpactFormat.POSITION_BOTTOM:
                 y = i_height - \
-                    self.BOTTOM_PAD - \
-                    ((len(text_lines) - i) * max_text_height)
+                    self.PAD_BOTTOM - \
+                    int((len(text_lines) - i) * max_text_height)
             else:
-                return image  # invalid position
+                return image  # todo handle invalid position
 
             for pos in [
                 (x - ImpactFormat.OFFSET, y - ImpactFormat.OFFSET),
@@ -95,16 +103,23 @@ class ImpactFormat(MemeFormat):
                 (x - ImpactFormat.OFFSET, y + ImpactFormat.OFFSET),
                 (x + ImpactFormat.OFFSET, y + ImpactFormat.OFFSET)
             ]:
-                draw.text(pos, text, font=font, fill="black")
+                with Pilmoji(image) as pilmoji:
+                    pilmoji.text(pos, text, fill=(0, 0, 0), font=font,
+                                 emoji_scale_factor=self.EMOJI_SCALE,
+                                 emoji_position_offset=(0, 7),
+                                 emoji_fill=(0, 0, 0))
 
-            draw.text((x, y), text, font=font, fill="white")
+            with Pilmoji(image) as pilmoji:
+                pilmoji.text((x, y), text, fill=(255, 255, 255), font=font,
+                             emoji_scale_factor=self.EMOJI_SCALE,
+                             emoji_position_offset=(0, 7))
 
         return image
 
 
 class TwitterFormat(MemeFormat):
     WORD_WRAP = 30
-    INIT_FONT_SIZE = 45
+    INIT_FONT_SIZE = 42
     MAX_FONT = 0.94
     PAD_WHITE = 15
     RADIUS = 60
@@ -125,29 +140,30 @@ class TwitterFormat(MemeFormat):
             image=image,
             font_path=self.font_path,
             init_font_size=self.INIT_FONT_SIZE,
-            max_font=self.MAX_FONT)
+            font_scale=self.MAX_FONT)
 
         max_text_height = self._get_max_text_height(
-            text_lines=text_lines, font=font)
+            text_lines=text_lines,
+            font=font)
 
         image = TwitterFormat._add_corners(image, TwitterFormat.RADIUS)
 
-        top = floor(TwitterFormat.PAD_WHITE * 2.5) + \
-              (len(text_lines) * max_text_height)
-
+        pad_top = int(TwitterFormat.PAD_WHITE * 2.4)
+        pad_white_top = pad_top + (len(text_lines) * max_text_height)
         border = (TwitterFormat.PAD_WHITE,
-                  top,
+                  pad_white_top,
                   TwitterFormat.PAD_WHITE,
                   TwitterFormat.PAD_WHITE)
 
-        image = ImageOps.expand(image, border=border, fill='white')
-        draw = ImageDraw.Draw(image)
+        image = ImageOps.expand(image, border=border, fill="white")
 
         for i, text in enumerate(text_lines):
             x = TwitterFormat.PAD_WHITE
-            y = TwitterFormat.PAD_WHITE + (i * max_text_height)
+            y = int(pad_top * 0.42) + (i * max_text_height)
 
-            draw.text((x, y), text, font=font, fill="black")
+            with Pilmoji(image) as pilmoji:
+                pilmoji.text((x, y), text, fill=(0, 0, 0), font=font,
+                             emoji_position_offset=(0, 3))
 
         return image
 
@@ -191,14 +207,20 @@ class TwitterFormat(MemeFormat):
 
 class DemotivationalFormat(MemeFormat):
     PAD_BORDER_INNER = 3
+    PAD_BORDER_OUTER_TOP = 55
+    PAD_ABOVE = 35
 
     DT_INIT_FONT_SIZE = 60
     DT_WORD_WRAP = 18
     DT_MAX_FONT = 0.9
+    DT_EMOJI_SCALE = 0.85
+    DT_MAX_HEIGHT = 80
+    DT_MULTILINE_SCALE = 0.2
 
     DS_INIT_FONT_SIZE = 28
     DS_WORD_WRAP = 55
     DS_MAX_FONT = 0.94
+    DS_EMOJI_SCALE = 1.0
 
     def __init__(self,
                  logger,
@@ -218,33 +240,34 @@ class DemotivationalFormat(MemeFormat):
             DemotivationalFormat.PAD_BORDER_INNER
         )
 
-        border_outer = (80, 55, 80, 0)
+        border_outer = (80, self.PAD_BORDER_OUTER_TOP, 80, 0)
 
         image = ImageOps.expand(image, border=border_inner, fill='black')
         image = ImageOps.expand(image, border=border_inner, fill='white')
         image = ImageOps.expand(image, border=border_outer, fill='black')
 
-        if list_title is None and list_subtitle is None:
+        is_title = list_title is not None and len(list_title) > 0
+        is_subtitle = list_subtitle is not None and len(list_subtitle) > 0
+
+        if (not is_title) and (not is_subtitle):
             image = ImageOps.expand(
-                image, border=(0, 0, 0, 50), fill='black')
-
+                image, border=(0, 0, 0, self.PAD_BORDER_OUTER_TOP),
+                fill='black')
         else:
-            if list_title is not None:
-                image = ImageOps.expand(
-                    image, border=(0, 0, 0, 34), fill='black')
+            image = ImageOps.expand(
+                image, border=(0, 0, 0, self.PAD_ABOVE), fill='black')
 
-                image = self._add_demotivational_title(image, list_title)
+            if is_title:
+                image = self._add_demotivational_title(
+                    image, list_title, is_subtitle)
 
-            if list_subtitle is not None:
-                if list_title is None:
-                    image = ImageOps.expand(
-                        image, border=(0, 0, 0, 28), fill='black')
-
-                image = self._add_demotivational_subtitle(image, list_subtitle)
+            if is_subtitle:
+                image = self._add_demotivational_subtitle(
+                    image, list_subtitle, is_title)
 
         return image
 
-    def _add_demotivational_title(self, image, list_title):
+    def _add_demotivational_title(self, image, list_title, is_subtitle):
         dt_width, dt_height = image.size
 
         title_lines = wrap(' '.join(list_title).upper(),
@@ -255,30 +278,42 @@ class DemotivationalFormat(MemeFormat):
             image=image,
             font_path=self.font_title_path,
             init_font_size=self.DT_INIT_FONT_SIZE,
-            max_font=self.DT_MAX_FONT)
+            font_scale=self.DT_MAX_FONT,
+            emoji_scale_factor=self.DT_EMOJI_SCALE)
 
-        max_text_height = self._get_max_text_height(
-            text_lines=title_lines, font=font)
-
-        title_bottom = len(title_lines) * max_text_height
+        len_title_lines = len(title_lines)
+        title_bottom = int(len_title_lines *
+                           self.DT_MAX_HEIGHT -
+                           ((len_title_lines - 1) *
+                            self.DT_MAX_HEIGHT *
+                            self.DT_MULTILINE_SCALE))
 
         image = ImageOps.expand(
             image, border=(0, 0, 0, title_bottom), fill='black')
 
-        dt_draw = ImageDraw.Draw(image)
-
         for i, text in enumerate(title_lines):
-            t_width, t_height = dt_draw.textsize(text, font=font)
+            with Pilmoji(image) as pimoji:
+                t_width, t_height = pimoji.getsize(
+                    text=text,
+                    font=font,
+                    emoji_scale_factor=self.DT_EMOJI_SCALE)
 
-            x = (dt_width - t_width) / 2
-            y = dt_height - \
-                (max_text_height / 2) + (i * max_text_height)
+            x = int((dt_width - t_width) / 2)
+            y = int(dt_height +
+                    (i * self.DT_MAX_HEIGHT) -
+                    (self.DT_MAX_HEIGHT * 0.37))
 
-            dt_draw.text((x, y), text, font=font, fill="white")
+            if i > 0:
+                y -= int(i * self.DT_MAX_HEIGHT * self.DT_MULTILINE_SCALE)
 
+            with Pilmoji(image) as pilmoji:
+                pilmoji.text((x, y), text, fill=(255, 255, 255), font=font,
+                             emoji_scale_factor=self.DT_EMOJI_SCALE,
+                             emoji_position_offset=(0, int(self.DT_MAX_HEIGHT *
+                                                           0.32)))
         return image
 
-    def _add_demotivational_subtitle(self, image, list_subtitle):
+    def _add_demotivational_subtitle(self, image, list_subtitle, is_title):
         ds_width, ds_height = image.size
 
         subtitle_lines = wrap(' '.join(list_subtitle),
@@ -289,7 +324,8 @@ class DemotivationalFormat(MemeFormat):
             image=image,
             font_path=self.font_subtitle_path,
             init_font_size=self.DS_INIT_FONT_SIZE,
-            max_font=self.DS_MAX_FONT)
+            font_scale=self.DS_MAX_FONT,
+            emoji_scale_factor=self.DS_EMOJI_SCALE)
 
         max_text_height = self._get_max_text_height(
             text_lines=subtitle_lines, font=font)
@@ -299,18 +335,24 @@ class DemotivationalFormat(MemeFormat):
         image = ImageOps.expand(
             image, border=(0, 0, 0, subtitle_bottom), fill='black')
 
-        ds_draw = ImageDraw.Draw(image)
-
         for i, text in enumerate(subtitle_lines):
-            t_width, t_height = ds_draw.textsize(
-                text, font=font)
+            with Pilmoji(image) as pimoji:
+                t_width, t_height = pimoji.getsize(
+                    text=text,
+                    font=font,
+                    emoji_scale_factor=self.DS_EMOJI_SCALE)
 
-            x = (ds_width - t_width) / 2
-            y = ds_height - \
-                (max_text_height / 2) + (i * max_text_height)
+            x = int((ds_width - t_width) / 2)
 
-            ds_draw.text((x, y), text, font=font, fill="white")
+            y = int(ds_height -
+                    (self.PAD_ABOVE * 0.6) +
+                    (i * max_text_height))
 
+            with Pilmoji(image) as pilmoji:
+                pilmoji.text((x, y), text, fill=(255, 255, 255), font=font,
+                             emoji_scale_factor=self.DS_EMOJI_SCALE,
+                             emoji_position_offset=(0, int(max_text_height *
+                                                           0.2)))
         return image
 
 
@@ -320,6 +362,7 @@ class GIFCaptionFormat(MemeFormat):
     TEXT_SPACE = 5
     MAX_FONT = 0.94
     HEIGHT_PAD = 20
+    EMOJI_SCALE = 0.95
 
     def __init__(self, logger, font_path) -> None:
         super().__init__(logger)
@@ -336,7 +379,7 @@ class GIFCaptionFormat(MemeFormat):
             image=image,
             font_path=self.font_path,
             init_font_size=self.INIT_FONT_SIZE,
-            max_font=self.MAX_FONT)
+            font_scale=self.MAX_FONT)
 
         max_text_height = self._get_max_text_height(
             text_lines=text_lines, font=font)
@@ -348,17 +391,23 @@ class GIFCaptionFormat(MemeFormat):
         border = (0, top, 0, 0)
         image = ImageOps.expand(image, border=border, fill='white')
 
-        draw = ImageDraw.Draw(image)
         i_width, i_height = image.size
 
         for i, text in enumerate(text_lines):
-            t_width, t_height = draw.textsize(text, font=font)
+            with Pilmoji(image) as pimoji:
+                t_width, t_height = pimoji.getsize(
+                    text=text,
+                    font=font,
+                    emoji_scale_factor=self.EMOJI_SCALE)
 
-            x = (i_width - t_width) / 2
-            y = GIFCaptionFormat.HEIGHT_PAD + \
-                (i * (max_text_height + GIFCaptionFormat.TEXT_SPACE))
+            x = int((i_width - t_width) / 2)
+            y = int((GIFCaptionFormat.HEIGHT_PAD * 0.95) +
+                    (i * (max_text_height + GIFCaptionFormat.TEXT_SPACE)))
 
-            draw.text((x, y), text, font=font, fill="black")
+            with Pilmoji(image) as pilmoji:
+                pilmoji.text((x, y), text, fill=(0, 0, 0), font=font,
+                             emoji_scale_factor=self.EMOJI_SCALE,
+                             emoji_position_offset=(0, 6))
 
         return image
 
