@@ -213,8 +213,8 @@ class DemotivationalFormat(MemeFormat):
     DT_INIT_FONT_SIZE = 60
     DT_WORD_WRAP = 18
     DT_MAX_FONT = 0.9
+    DT_MAX_TEXT_SCALE = 1.1
     DT_EMOJI_SCALE = 0.85
-    DT_MAX_HEIGHT = 80
     DT_MULTILINE_SCALE = 0.2
 
     DS_INIT_FONT_SIZE = 28
@@ -281,11 +281,16 @@ class DemotivationalFormat(MemeFormat):
             font_scale=self.DT_MAX_FONT,
             emoji_scale_factor=self.DT_EMOJI_SCALE)
 
+        max_text_height = self._get_max_text_height(
+            text_lines=title_lines, font=font)
+
+        max_text_height = max_text_height * self.DT_MAX_TEXT_SCALE
+
         len_title_lines = len(title_lines)
         title_bottom = int(len_title_lines *
-                           self.DT_MAX_HEIGHT -
+                           max_text_height -
                            ((len_title_lines - 1) *
-                            self.DT_MAX_HEIGHT *
+                            max_text_height *
                             self.DT_MULTILINE_SCALE))
 
         image = ImageOps.expand(
@@ -300,16 +305,16 @@ class DemotivationalFormat(MemeFormat):
 
             x = int((dt_width - t_width) / 2)
             y = int(dt_height +
-                    (i * self.DT_MAX_HEIGHT) -
-                    (self.DT_MAX_HEIGHT * 0.37))
+                    (i * max_text_height) -
+                    (max_text_height * 0.37))
 
             if i > 0:
-                y -= int(i * self.DT_MAX_HEIGHT * self.DT_MULTILINE_SCALE)
+                y -= int(i * max_text_height * self.DT_MULTILINE_SCALE)
 
             with Pilmoji(image) as pilmoji:
                 pilmoji.text((x, y), text, fill=(255, 255, 255), font=font,
                              emoji_scale_factor=self.DT_EMOJI_SCALE,
-                             emoji_position_offset=(0, int(self.DT_MAX_HEIGHT *
+                             emoji_position_offset=(0, int(max_text_height *
                                                            0.32)))
         return image
 
