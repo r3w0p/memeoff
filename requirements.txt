@@ -1,6 +1,6 @@
 bumpversion==0.6.0
 discord.py==1.7.3
-Pillow==9.0.0
+Pillow==9.0.1
 pilmoji==2.0.1
 python-slugify==4.0.1
 requests==2.25.1
