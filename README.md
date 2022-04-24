@@ -4,7 +4,6 @@
 [![License](https://img.shields.io/github/license/r3w0p/memeoff.svg)](https://github.com/r3w0p/memeoff/blob/master/LICENSE)
 [![Last Commit](https://img.shields.io/github/last-commit/r3w0p/memeoff.svg)](https://github.com/r3w0p/memeoff/graphs/commit-activity)
 [![Open Issues](https://img.shields.io/github/issues-raw/r3w0p/memeoff.svg)](https://github.com/r3w0p/memeoff/issues)
-[![Merch](https://img.shields.io/badge/merch-redbubble-red.svg)](https://www.redbubble.com/people/r3w0p)
 
 [![Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/P5P044N2B)
 
