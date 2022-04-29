@@ -5,8 +5,6 @@
 [![Last Commit](https://img.shields.io/github/last-commit/r3w0p/memeoff.svg)](https://github.com/r3w0p/memeoff/graphs/commit-activity)
 [![Open Issues](https://img.shields.io/github/issues-raw/r3w0p/memeoff.svg)](https://github.com/r3w0p/memeoff/issues)
 
-[![Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/r3w0p)
-
 A Discord bot for fast meme creation.
 
 This software is a **work in progress**.
